@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:omnix/features/dashboard/screens/dashboard_screen.dart';
 
 class MainLayoutShellController extends GetxController{
   RxInt selectedIndex = 0.obs;
 
   final List<Widget> screens = [
-    const Center(child: Text('Dashboard View', style: TextStyle(fontSize: 24, color: Colors.white))),
+    const DashboardScreen(),
     const Center(child: Text('POS', style: TextStyle(fontSize: 24, color: Colors.white))),
     const Center(child: Text('Orders', style: TextStyle(fontSize: 24, color: Colors.white))),
     const Center(child: Text('Menu', style: TextStyle(fontSize: 24, color: Colors.white))),

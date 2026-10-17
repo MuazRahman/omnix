@@ -18,22 +18,22 @@ class SidebarNavItemWidget extends StatelessWidget {
       bool isSelected = controller.selectedIndex.value == index;
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Container(
-          height: 45,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            color: isSelected ? AppTheme.amber : Colors.transparent,
-          ),
-          child: ListTile(
-            onTap: () {
-              controller.changeTabIndex(index);
-            },
-            leading: Icon(icon, size: 20, color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,),
-            title: Text(title,
-              style: TextStyle(
-                color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+        child: GestureDetector(
+          onTap: () => controller.changeTabIndex(index),
+          child: Container(
+            height: 45,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: isSelected ? AppTheme.amber : Colors.transparent,
+            ),
+            child: ListTile(
+              leading: Icon(icon, size: 20, color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,),
+              title: Text(title,
+                style: TextStyle(
+                  color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),

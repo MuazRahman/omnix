@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/main_layout_shell/controller/main_layout_shell_controller.dart';
 import 'package:omnix/features/main_layout_shell/widgets/section_header_widget.dart';
+import 'package:omnix/features/main_layout_shell/widgets/sidebar_bottom_user_card.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_nav_item_widget.dart';
 
 
@@ -42,6 +44,12 @@ class MainLayoutShellScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.black,
+        border: Border(
+            right: BorderSide(
+                color: AppTheme.amber.withAlpha(50),
+                width: 0.5,
+            ),
+        ),
       ),
       width: 260,
       child: Column(
@@ -59,13 +67,13 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 0, icon: Icons.dashboard, title: 'Dashboard',),
+                index: 0, icon: Icons.dashboard_outlined, title: 'Dashboard',),
               SidebarNavItemWidget(
-                index: 1, icon: Icons.point_of_sale, title: 'POS',),
+                index: 1, icon: Icons.point_of_sale_outlined, title: 'POS',),
               SidebarNavItemWidget(
-                index: 2, icon: Icons.list_alt, title: 'Orders',),
+                index: 2, icon: Icons.list_alt_outlined, title: 'Orders',),
               SidebarNavItemWidget(
-                index: 3, icon: Icons.restaurant_menu, title: 'Menu',),
+                index: 3, icon: Icons.restaurant_menu_outlined, title: 'Menu',),
             ],
           ),
 
@@ -79,9 +87,9 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 4, icon: Icons.inventory_2, title: 'Inventory',),
+                index: 4, icon: Icons.inventory_2_outlined, title: 'Inventory',),
               SidebarNavItemWidget(
-                index: 5, icon: Icons.shopping_cart, title: 'Purchases',),
+                index: 5, icon: Icons.shopping_cart_outlined, title: 'Purchases',),
             ],
           ),
 
@@ -95,16 +103,21 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 6, icon: Icons.group, title: 'Customers',),
+                index: 6, icon: Icons.group_outlined, title: 'Customers',),
               SidebarNavItemWidget(
-                index: 7, icon: Icons.store, title: 'Branches',),
+                index: 7, icon: Icons.store_outlined, title: 'Branches',),
               SidebarNavItemWidget(
-                index: 8, icon: Icons.bar_chart, title: 'Reports',),
+                index: 8, icon: Icons.bar_chart_outlined, title: 'Reports',),
               SidebarNavItemWidget(index: 9,
                 icon: Icons.admin_panel_settings_outlined,
                 title: 'Staff & Settings',),
             ],
           ),
+
+          const Spacer(),
+
+          // Sidebar bottom user card
+          SidebarBottomUserCard(),
 
 
         ],
@@ -153,3 +166,5 @@ class MainLayoutShellScreen extends StatelessWidget {
     );
   }
 }
+
+

@@ -6,7 +6,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Text('Dashboard View'),
+      body: Text('Dashboard View', style: TextStyle(fontSize: 24, color: Colors.white)),
     );
   }
 }

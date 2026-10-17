@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/main_layout_shell/controller/main_layout_shell_controller.dart';
-import 'package:omnix/features/main_layout_shell/widgets/section_header_widget.dart';
+import 'package:omnix/features/main_layout_shell/widgets/sidebar_section_header_widget.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_bottom_user_card.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_nav_item_widget.dart';
 
@@ -60,7 +60,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           buildSoftwareBranding(),
 
           // Section Header
-          SectionHeaderWidget(title: 'OPERATIONS'),
+          SidebarSectionHeaderWidget(title: 'OPERATIONS'),
 
           // Operations items
           Column(
@@ -80,7 +80,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Section Header
-          SectionHeaderWidget(title: 'INVENTORY & SUPPLY'),
+          SidebarSectionHeaderWidget(title: 'INVENTORY & SUPPLY'),
 
           // Inventory & Supply items
           Column(
@@ -96,7 +96,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Section Header
-          SectionHeaderWidget(title: 'MANAGEMENT'),
+          SidebarSectionHeaderWidget(title: 'MANAGEMENT'),
 
           // Management items
           Column(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 
 class SidebarBottomUserCard extends StatelessWidget {
-  const new({
+  const SidebarBottomUserCard({
     super.key,
   });
 

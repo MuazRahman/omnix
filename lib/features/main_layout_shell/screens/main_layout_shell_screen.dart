@@ -43,7 +43,7 @@ class MainLayoutShellScreen extends StatelessWidget {
   Widget buildLeftSidebar() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.black,
+        color: AppTheme.SidebarBackgroundBlack,
         border: Border(
             right: BorderSide(
                 color: AppTheme.amber.withAlpha(50),

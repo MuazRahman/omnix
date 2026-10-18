@@ -27,10 +27,10 @@ class SidebarNavItemWidget extends StatelessWidget {
               color: isSelected ? AppTheme.amber : Colors.transparent,
             ),
             child: ListTile(
-              leading: Icon(icon, size: 20, color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,),
+              leading: Icon(icon, size: 20, color: isSelected ? AppTheme.SidebarBackgroundBlack : AppTheme.lightAmberWhite,),
               title: Text(title,
                 style: TextStyle(
-                  color: isSelected ? AppTheme.black : AppTheme.lightAmberWhite,
+                  color: isSelected ? AppTheme.SidebarBackgroundBlack : AppTheme.lightAmberWhite,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

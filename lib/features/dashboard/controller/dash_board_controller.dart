@@ -1,12 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class DashBoardController extends GetxController {
-  final selectedBranch = ValueNotifier<String?>('Main Branch (DHK-01)');
+  final dayRanges = const ['Today', '7 Days', '30 Days'];
 
-  final branches = ['Main Branch (DHK-01)', 'Khulna Branch (KHL-01)', 'Dhaka Branch (DHK-02)'];
+  final selectedDayRange = 0.obs;
 
-  void branchOnChanged(String? value) {
-    selectedBranch.value = value!;
+  void dayRangeOnChanged(int index) {
+    selectedDayRange.value = index;
   }
 }

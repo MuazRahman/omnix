@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:omnix/core/bindings/controller_binder.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/main_layout_shell/screens/main_layout_shell_screen.dart';
 
@@ -13,10 +14,11 @@ class Omnix extends StatelessWidget {
       title: 'Omnix',
       theme: ThemeData(
         fontFamily: 'Inter',
-        scaffoldBackgroundColor: AppTheme.background,
+        scaffoldBackgroundColor: AppTheme.windowWidgetBackgroundBlack,
         useMaterial3: true,
       ),
       home: MainLayoutShellScreen(),
+      initialBinding: ControllerBinder(),
     );
   }
 }

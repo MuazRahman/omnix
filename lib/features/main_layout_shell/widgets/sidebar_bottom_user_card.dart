@@ -12,7 +12,7 @@ class SidebarBottomUserCard extends StatelessWidget {
       height: 130,
       width: double.maxFinite,
       decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: AppTheme.windowWidgetBackgroundBlack,
           borderRadius: BorderRadius.circular(0),
           border: Border.all(color: Colors.white10, width: 0.5)
       ),
@@ -27,7 +27,7 @@ class SidebarBottomUserCard extends StatelessWidget {
               height: 56,
               width: double.maxFinite,
               decoration: BoxDecoration(
-                color: AppTheme.black,
+                color: AppTheme.SidebarBackgroundBlack,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppTheme.amber.withAlpha(50), width: 0.5),
               ),
@@ -61,7 +61,7 @@ class SidebarBottomUserCard extends StatelessWidget {
                     // User Image
                     const CircleAvatar(
                         radius: 17,
-                        backgroundColor: AppTheme.background,
+                        backgroundColor: AppTheme.windowWidgetBackgroundBlack,
                         child: Icon(Icons.person)
 
                     ),
@@ -82,7 +82,7 @@ class SidebarBottomUserCard extends StatelessWidget {
                   child: Container(
                     height: 34,
                     decoration: BoxDecoration(
-                      color: AppTheme.black,
+                      color: AppTheme.SidebarBackgroundBlack,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: AppTheme.amber.withAlpha(50), width: 0.5),
                     ),
@@ -112,7 +112,7 @@ class SidebarBottomUserCard extends StatelessWidget {
                   child: Container(
                     height: 34,
                     decoration: BoxDecoration(
-                      color: AppTheme.black,
+                      color: AppTheme.SidebarBackgroundBlack,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: AppTheme.amber.withAlpha(50), width: 0.5),
                     ),

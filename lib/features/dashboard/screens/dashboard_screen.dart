@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,7 +61,7 @@ class DashboardScreen extends StatelessWidget {
                     onChanged: controller.branchOnChanged,
 
                     // Chevron icon (rotates when open)
-                    iconStyleData: IconStyleData(
+                    iconStyleData: const IconStyleData(
                       icon: Padding(
                         padding: EdgeInsets.only(right: 4),
                         child: Icon(
@@ -72,13 +70,10 @@ class DashboardScreen extends StatelessWidget {
                           color: AppTheme.deepAmberWhite,
                         ),
                       ),
-                      openMenuIcon: RotatedBox(
-                        quarterTurns: 1,
-                        child: Icon(
-                          Icons.keyboard_arrow_down,
-                          size: 20,
-                          color: AppTheme.amber,
-                        ),
+                      openMenuIcon: Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 20,
+                        color: AppTheme.amber,
                       ),
                       iconSize: 20,
                     ),
@@ -87,7 +82,7 @@ class DashboardScreen extends StatelessWidget {
                     buttonStyleData: ButtonStyleData(
                         height: 40,
                         width: 320,
-                        padding: EdgeInsets.only(left: 16, right: 8),
+                        padding: const EdgeInsets.only(left: 16, right: 8),
                         overlayColor: WidgetStatePropertyAll(AppTheme.amber.withAlpha(20)),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
@@ -101,8 +96,8 @@ class DashboardScreen extends StatelessWidget {
                       width: 320,
                       maxHeight: 240,
                       elevation: 12,
-                      offset: Offset(0, 4),
-                      padding: EdgeInsets.all(6),
+                      offset: const Offset(0, 4),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         border: Border.all(color: AppTheme.amber.withAlpha(50), width: 0.5),
                         borderRadius: BorderRadius.circular(6),
@@ -111,7 +106,7 @@ class DashboardScreen extends StatelessWidget {
                           BoxShadow(
                             color: Colors.black.withAlpha(150),
                             blurRadius: 16,
-                            offset: Offset(0, 6),
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -139,7 +134,7 @@ class DashboardScreen extends StatelessWidget {
                   // search invoice
                   SizedBox(
                     height: 35,
-                    width: 250,
+                    width: 300,
                     child: TextField(
                       inputFormatters: [
                         TextInputFormatter.withFunction((oldValue, newValue) {
@@ -150,7 +145,7 @@ class DashboardScreen extends StatelessWidget {
                           },
                         ),
                       ],
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         color: AppTheme.lightAmberWhite,
                         fontWeight: .w400,
@@ -186,14 +181,14 @@ class DashboardScreen extends StatelessWidget {
                   // sync notification
                   Container(
                       height: 24,
-                      width: 77.38,
+                      width: 90,
                       decoration: BoxDecoration(
                         color: AppTheme.lightGreen.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: AppTheme.lightGreen, width: 0.5)
                       ),
-                    
-                      child: Center(
+
+                      child: const Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -203,6 +198,7 @@ class DashboardScreen extends StatelessWidget {
                               backgroundColor: AppTheme.lightGreen,
                               maxRadius: 4,
                             ),
+
                             Text('SYNCED',
                               style: TextStyle(
                                 color: AppTheme.lightGreen,
@@ -217,37 +213,39 @@ class DashboardScreen extends StatelessWidget {
                     ),
 
                   // new sale
-                  Container(
-                    height: 36,
-                    width: 200,
-                    decoration: BoxDecoration(
-                      color: AppTheme.amber,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        spacing: 12,
-                        children: [
-                          DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.brown.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(2.0),
-                                child: Icon(Icons.add, color: AppTheme.deepAmberWhite, size: 16, fontWeight: FontWeight.w600,),
-                              )),
-                          Text('New Sale',
-                            style: TextStyle(
-                              color: AppTheme.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.amber,
+                      padding: const EdgeInsets.symmetric(horizontal: 70),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadiusGeometry.circular(6),
                       ),
                     ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 12,
+                          children: [
+                            DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.brown.withValues(alpha: 0.4),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(3.0),
+                                  child: const Icon(Icons.restaurant, color: AppTheme.deepAmberWhite, size: 16, fontWeight: FontWeight.w600,),
+                                )),
+                            const Text('New Sale',
+                              style: TextStyle(
+                                color: AppTheme.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ),
 
                   const Spacer(),
@@ -272,7 +270,6 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   
                   // user icon
                   DecoratedBox(
@@ -282,8 +279,6 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     child: Icon(Icons.person, color: Colors.brown, size: 35,),
                   ),
-
-
 
                 ],
               ),

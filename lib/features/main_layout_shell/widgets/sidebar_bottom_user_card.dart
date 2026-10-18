@@ -39,7 +39,7 @@ class SidebarBottomUserCard extends StatelessWidget {
                       spacing: 6,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Tanvir Rahman',
+                        const Text('Tanvir Rahman',
                           style: TextStyle(
                               color: AppTheme.white,
                               fontSize: 12,
@@ -56,10 +56,10 @@ class SidebarBottomUserCard extends StatelessWidget {
                       ],
                     ),
 
-                    Spacer(),
+                    const Spacer(),
 
                     // User Image
-                    CircleAvatar(
+                    const CircleAvatar(
                         radius: 17,
                         backgroundColor: AppTheme.background,
                         child: Icon(Icons.person)

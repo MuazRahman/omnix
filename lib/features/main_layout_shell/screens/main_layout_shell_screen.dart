@@ -60,7 +60,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           buildSoftwareBranding(),
 
           // Section Header
-          SidebarSectionHeaderWidget(title: 'OPERATIONS'),
+          const SidebarSectionHeaderWidget(title: 'OPERATIONS'),
 
           // Operations items
           Column(
@@ -80,7 +80,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Section Header
-          SidebarSectionHeaderWidget(title: 'INVENTORY & SUPPLY'),
+          const SidebarSectionHeaderWidget(title: 'INVENTORY & SUPPLY'),
 
           // Inventory & Supply items
           Column(
@@ -96,7 +96,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Section Header
-          SidebarSectionHeaderWidget(title: 'MANAGEMENT'),
+          const SidebarSectionHeaderWidget(title: 'MANAGEMENT'),
 
           // Management items
           Column(
@@ -143,7 +143,7 @@ class MainLayoutShellScreen extends StatelessWidget {
           const SizedBox(width: 10,),
 
           // Brand name
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Omnix',

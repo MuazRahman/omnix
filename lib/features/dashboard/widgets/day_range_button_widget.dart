@@ -4,10 +4,10 @@ import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/dashboard/controller/dash_board_controller.dart';
 
 class DayRangeButtonWidget extends StatelessWidget {
-  DayRangeButtonWidget({super.key, required this.dashBoardController, required this.index});
+  const DayRangeButtonWidget({super.key, required this.dashBoardController, required this.index});
 
   final DashBoardController dashBoardController;
-  int index;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,8 @@ class DayRangeButtonWidget extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(4),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color: isSelected ? AppTheme.amber : Colors.transparent,
               borderRadius: BorderRadius.circular(4),

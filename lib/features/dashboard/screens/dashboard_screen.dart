@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
+import 'package:omnix/features/common/widgets/custom_widget_card.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/dashboard/controller/dash_board_controller.dart';
 import 'package:omnix/features/dashboard/widgets/day_range_button_widget.dart';
@@ -24,9 +27,58 @@ class DashboardScreen extends StatelessWidget {
 
           // Dashboard Overview, current branch name & day range selection
           buildDashboardOverViewAndDayRangeSelector(branchController, dashboardController),
+
+          // summary card (today's sale, active order, ticket, stock)
+          buildSalesOverview(),
+
+          // Sales velocity chart
+
         ],
       )
     );
+  }
+
+  Padding buildSalesOverview() {
+    return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: .start,
+            spacing: 16,
+            children: [
+
+              // today's sale card
+              CustomCardWidget(
+                title: "Today's Sale",
+                icon: Icons.credit_card,
+                content: '84,650 TK',
+                subtitle: '12.4% vs yesterday',
+              ),
+
+              // active order
+              CustomCardWidget(
+                title: "Active Order",
+                icon: Icons.restaurant_menu_outlined,
+                content: '6',
+                subtitle: 'Orders today',
+              ),
+
+              CustomCardWidget(
+                title: "Average Ticket",
+                icon: Icons.bookmark_added,
+                content: '525 TK',
+                subtitle: 'per order',
+              ),
+
+              CustomCardWidget(
+                title: "Low Stock",
+                icon: Icons.warning_amber_rounded,
+                iconColor: Colors.red.shade700.withValues(alpha: 0.9),
+                content: "4",
+                subtitle: 'Items required restock',
+              ),
+            ],
+          ),
+        );
   }
 
   Widget buildDashboardOverViewAndDayRangeSelector(
@@ -90,17 +142,24 @@ class DashboardScreen extends StatelessWidget {
               color: AppTheme.windowWidgetBackgroundBlack,
               border: Border.all(
                 color: AppTheme.lightAmberWhite.withValues(alpha: 50),
-                width: 0.5,
+                // Whole-pixel width so it renders crisp and never
+                // anti-aliases into a fainter/narrower line.
+                width: 1.0,
               ),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Row(
-              mainAxisSize: .min,
-              children: List.generate(
-                dashboardController.dayRanges.length,
-                    (index) =>
-                    DayRangeButtonWidget(
-                        dashBoardController: dashboardController, index: index),
+            child: SizedBox(
+              // Fixed total width: the left edge stays on the same pixel
+              // regardless of which label is bolded, so the border never shifts.
+              width: 250,
+              child: Row(
+                children: List.generate(
+                  dashboardController.dayRanges.length,
+                      (index) => Expanded(
+                        child: DayRangeButtonWidget(
+                            dashBoardController: dashboardController, index: index),
+                      ),
+                ),
               ),
             ),
           ),
@@ -109,3 +168,5 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 }
+
+

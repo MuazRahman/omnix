@@ -4,7 +4,11 @@ import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/dashboard/controller/dash_board_controller.dart';
 
 class DayRangeButtonWidget extends StatelessWidget {
-  const DayRangeButtonWidget({super.key, required this.dashBoardController, required this.index});
+  const DayRangeButtonWidget({
+    super.key,
+    required this.dashBoardController,
+    required this.index,
+  });
 
   final DashBoardController dashBoardController;
   final int index;
@@ -12,31 +16,33 @@ class DayRangeButtonWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final bool isSelected = dashBoardController.selectedDayRange.value == index;
+      final bool isSelected =
+          dashBoardController.selectedDayRange.value == index;
 
-      return InkWell(
-        onTap: () => dashBoardController.dayRangeOnChanged(index),
-        borderRadius: BorderRadius.circular(6),
-        highlightColor: AppTheme.amber.withAlpha(15),
-        splashColor: AppTheme.amber.withAlpha(25),
-        // Padding between segment border and the selected rounded rect
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? AppTheme.amber : Colors.transparent,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              dashBoardController.dayRanges[index],
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? .w700 : .w500,
-                color: isSelected
-                    ? AppTheme.windowWidgetBackgroundBlack
-                    : AppTheme.lightAmberWhite.withAlpha(140),
+      // Padding between segment border and the selected rounded rect
+      return Padding(
+        padding: const EdgeInsets.all(4),
+        child: Material(
+          color: isSelected ? AppTheme.amber : Colors.transparent,
+          borderRadius: BorderRadius.circular(4),
+          child: InkWell(
+            onTap: () => dashBoardController.dayRangeOnChanged(index),
+            borderRadius: BorderRadius.circular(4),
+            highlightColor: AppTheme.amber.withAlpha(15),
+            splashColor: AppTheme.amber.withAlpha(25),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Center(
+                child: Text(
+                  dashBoardController.dayRanges[index],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? .w700 : .w500,
+                    color: isSelected
+                        ? AppTheme.windowWidgetBackgroundBlack
+                        : AppTheme.lightAmberWhite.withAlpha(140),
+                  ),
+                ),
               ),
             ),
           ),

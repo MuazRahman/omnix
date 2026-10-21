@@ -1,0 +1,146 @@
+import 'package:omnix/features/inventory/model/inventory_item_model.dart';
+
+/// Temporary data for the Inventory section.
+///
+/// Delete this file once the backend returns real stock.
+class DummyInventoryData {
+  const DummyInventoryData._();
+
+  static const List<String> categories = [
+    'All',
+    'Meat',
+    'Vegetables',
+    'Dairy',
+    'Dry Goods',
+    'Beverages',
+  ];
+
+  static const List<InventoryItem> items = [
+    InventoryItem(
+      id: 'ST-001',
+      name: 'Beef (Boneless)',
+      category: 'Meat',
+      quantity: 42,
+      unit: 'kg',
+      reorderLevel: 15,
+      unitCost: 620,
+    ),
+    InventoryItem(
+      id: 'ST-002',
+      name: 'Chicken Breast',
+      category: 'Meat',
+      quantity: 8,
+      unit: 'kg',
+      reorderLevel: 12,
+      unitCost: 340,
+    ),
+    InventoryItem(
+      id: 'ST-003',
+      name: 'Fish Fillet',
+      category: 'Meat',
+      quantity: 0,
+      unit: 'kg',
+      reorderLevel: 10,
+      unitCost: 480,
+    ),
+    InventoryItem(
+      id: 'ST-004',
+      name: 'Tomato',
+      category: 'Vegetables',
+      quantity: 25,
+      unit: 'kg',
+      reorderLevel: 10,
+      unitCost: 60,
+    ),
+    InventoryItem(
+      id: 'ST-005',
+      name: 'Onion',
+      category: 'Vegetables',
+      quantity: 60,
+      unit: 'kg',
+      reorderLevel: 20,
+      unitCost: 45,
+    ),
+    InventoryItem(
+      id: 'ST-006',
+      name: 'Lettuce',
+      category: 'Vegetables',
+      quantity: 6,
+      unit: 'kg',
+      reorderLevel: 8,
+      unitCost: 90,
+    ),
+    InventoryItem(
+      id: 'ST-007',
+      name: 'Milk',
+      category: 'Dairy',
+      quantity: 35,
+      unit: 'L',
+      reorderLevel: 15,
+      unitCost: 110,
+    ),
+    InventoryItem(
+      id: 'ST-008',
+      name: 'Butter',
+      category: 'Dairy',
+      quantity: 9,
+      unit: 'kg',
+      reorderLevel: 10,
+      unitCost: 520,
+    ),
+    InventoryItem(
+      id: 'ST-009',
+      name: 'Cheese',
+      category: 'Dairy',
+      quantity: 14,
+      unit: 'kg',
+      reorderLevel: 6,
+      unitCost: 720,
+    ),
+    InventoryItem(
+      id: 'ST-010',
+      name: 'Rice',
+      category: 'Dry Goods',
+      quantity: 120,
+      unit: 'kg',
+      reorderLevel: 40,
+      unitCost: 85,
+    ),
+    InventoryItem(
+      id: 'ST-011',
+      name: 'Flour',
+      category: 'Dry Goods',
+      quantity: 75,
+      unit: 'kg',
+      reorderLevel: 30,
+      unitCost: 70,
+    ),
+    InventoryItem(
+      id: 'ST-012',
+      name: 'Cooking Oil',
+      category: 'Dry Goods',
+      quantity: 28,
+      unit: 'L',
+      reorderLevel: 12,
+      unitCost: 260,
+    ),
+    InventoryItem(
+      id: 'ST-013',
+      name: 'Coke',
+      category: 'Beverages',
+      quantity: 4,
+      unit: 'case',
+      reorderLevel: 10,
+      unitCost: 950,
+    ),
+    InventoryItem(
+      id: 'ST-014',
+      name: 'Lemon Tea Mix',
+      category: 'Beverages',
+      quantity: 18,
+      unit: 'kg',
+      reorderLevel: 8,
+      unitCost: 320,
+    ),
+  ];
+}

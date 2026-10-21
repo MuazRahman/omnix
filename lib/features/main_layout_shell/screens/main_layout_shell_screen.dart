@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/main_layout_shell/controller/main_layout_shell_controller.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_section_header_widget.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_bottom_user_card.dart';
 import 'package:omnix/features/main_layout_shell/widgets/sidebar_nav_item_widget.dart';
 
-
 class MainLayoutShellScreen extends StatelessWidget {
   MainLayoutShellScreen({super.key});
 
   final MainLayoutShellController _controller = Get.put(
-      MainLayoutShellController());
+    MainLayoutShellController(),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       // Entire UI will set in a row
       body: Row(
         children: [
-
           // Left Sidebar
           buildLeftSidebar(),
 
@@ -32,9 +29,8 @@ class MainLayoutShellScreen extends StatelessWidget {
                 index: _controller.selectedIndex.value,
                 children: _controller.screens,
               );
-            })
+            }),
           ),
-
         ],
       ),
     );
@@ -43,19 +39,15 @@ class MainLayoutShellScreen extends StatelessWidget {
   Widget buildLeftSidebar() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.SidebarBackgroundBlack,
+        color: AppTheme.sidebarBackgroundBlack,
         border: Border(
-            right: BorderSide(
-                color: AppTheme.amber.withAlpha(50),
-                width: 0.5,
-            ),
+          right: BorderSide(color: AppTheme.amber.withAlpha(50), width: 0.5),
         ),
       ),
       width: 260,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // Top screen Software branding name
           buildSoftwareBranding(),
 
@@ -67,13 +59,25 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 0, icon: Icons.dashboard_outlined, title: 'Dashboard',),
+                index: 0,
+                icon: Icons.dashboard_outlined,
+                title: 'Dashboard',
+              ),
               SidebarNavItemWidget(
-                index: 1, icon: Icons.point_of_sale_outlined, title: 'POS',),
+                index: 1,
+                icon: Icons.point_of_sale_outlined,
+                title: 'POS',
+              ),
               SidebarNavItemWidget(
-                index: 2, icon: Icons.list_alt_outlined, title: 'Orders',),
+                index: 2,
+                icon: Icons.list_alt_outlined,
+                title: 'Orders',
+              ),
               SidebarNavItemWidget(
-                index: 3, icon: Icons.restaurant_menu_outlined, title: 'Menu',),
+                index: 3,
+                icon: Icons.restaurant_menu_outlined,
+                title: 'Menu',
+              ),
             ],
           ),
 
@@ -87,9 +91,15 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 4, icon: Icons.inventory_2_outlined, title: 'Inventory',),
+                index: 4,
+                icon: Icons.inventory_2_outlined,
+                title: 'Inventory',
+              ),
               SidebarNavItemWidget(
-                index: 5, icon: Icons.shopping_cart_outlined, title: 'Purchases',),
+                index: 5,
+                icon: Icons.shopping_cart_outlined,
+                title: 'Purchases',
+              ),
             ],
           ),
 
@@ -103,14 +113,25 @@ class MainLayoutShellScreen extends StatelessWidget {
             spacing: 8,
             children: [
               SidebarNavItemWidget(
-                index: 6, icon: Icons.group_outlined, title: 'Customers',),
+                index: 6,
+                icon: Icons.group_outlined,
+                title: 'Customers',
+              ),
               SidebarNavItemWidget(
-                index: 7, icon: Icons.store_outlined, title: 'Branches',),
+                index: 7,
+                icon: Icons.store_outlined,
+                title: 'Branches',
+              ),
               SidebarNavItemWidget(
-                index: 8, icon: Icons.bar_chart_outlined, title: 'Reports',),
-              SidebarNavItemWidget(index: 9,
+                index: 8,
+                icon: Icons.bar_chart_outlined,
+                title: 'Reports',
+              ),
+              SidebarNavItemWidget(
+                index: 9,
                 icon: Icons.admin_panel_settings_outlined,
-                title: 'Staff & Settings',),
+                title: 'Staff & Settings',
+              ),
             ],
           ),
 
@@ -118,8 +139,6 @@ class MainLayoutShellScreen extends StatelessWidget {
 
           // Sidebar bottom user card
           SidebarBottomUserCard(),
-
-
         ],
       ),
     );
@@ -132,39 +151,45 @@ class MainLayoutShellScreen extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white10, width: 0.5)
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white10, width: 0.5),
             ),
             child: Padding(
               padding: const EdgeInsets.all(4.0),
-              child: Icon(Icons.restaurant, color: AppTheme.amber,),
+              child: Icon(Icons.restaurant, color: AppTheme.amber),
             ),
           ),
-          const SizedBox(width: 10,),
+          const SizedBox(width: 10),
 
           // Brand name
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Omnix',
-                style: TextStyle(
-                  color: AppTheme.lightAmberWhite,
-                  fontSize: 22,
+          const Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Omnix',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.lightAmberWhite,
+                    fontSize: 22,
+                  ),
                 ),
-              ),
-              Text('Restaurant POS',
-                style: TextStyle(
-                  color: AppTheme.deepAmberWhite,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
+                Text(
+                  'Restaurant POS',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.deepAmberWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-            ],
-          )
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
-

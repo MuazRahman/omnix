@@ -8,11 +8,19 @@ class SidebarNavItemWidget extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  const SidebarNavItemWidget({super.key, required this.index, required this.icon, required this.title});
+  const SidebarNavItemWidget({
+    super.key,
+    required this.index,
+    required this.icon,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final MainLayoutShellController controller = Get.put(MainLayoutShellController());
+    // find the existing controller, putting a new one here would reset the
+    // selected index on every rebuild
+    final MainLayoutShellController controller =
+        Get.find<MainLayoutShellController>();
 
     return Obx(() {
       bool isSelected = controller.selectedIndex.value == index;
@@ -27,10 +35,19 @@ class SidebarNavItemWidget extends StatelessWidget {
               color: isSelected ? AppTheme.amber : Colors.transparent,
             ),
             child: ListTile(
-              leading: Icon(icon, size: 20, color: isSelected ? AppTheme.SidebarBackgroundBlack : AppTheme.lightAmberWhite,),
-              title: Text(title,
+              leading: Icon(
+                icon,
+                size: 20,
+                color: isSelected
+                    ? AppTheme.sidebarBackgroundBlack
+                    : AppTheme.lightAmberWhite,
+              ),
+              title: Text(
+                title,
                 style: TextStyle(
-                  color: isSelected ? AppTheme.SidebarBackgroundBlack : AppTheme.lightAmberWhite,
+                  color: isSelected
+                      ? AppTheme.sidebarBackgroundBlack
+                      : AppTheme.lightAmberWhite,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

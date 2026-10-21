@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/pos/controller/pos_controller.dart';
 import 'package:omnix/features/pos/model/pos_tender_mode_model.dart';
+import 'package:omnix/features/receipt/controller/printer_settings_controller.dart';
 import 'package:omnix/features/receipt/model/receipt_document.dart';
+import 'package:omnix/features/receipt/printer/receipt_printer.dart';
 import 'package:omnix/features/receipt/utils/receipt_link.dart';
+import 'package:omnix/features/receipt/widgets/printer_settings_dialog.dart';
 import 'package:omnix/features/receipt/widgets/receipt_paper_widget.dart';
 
 /// 80mm thermal receipt preview shown after the cart is charged.
@@ -29,6 +33,15 @@ class _PosReceiptDialogWidgetState extends State<PosReceiptDialogWidget> {
     // Freeze the timestamp so the printed time and the QR payload stay stable
     // for the whole lifetime of the dialog.
     _createdAt = DateTime.now();
+
+    // Cashiers who enabled it get the invoice without pressing Print.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!Get.isRegistered<PrinterSettingsController>()) return;
+      if (Get.find<PrinterSettingsController>().autoPrint.value) {
+        _printReceipt();
+      }
+    });
   }
 
   @override
@@ -143,6 +156,16 @@ class _PosReceiptDialogWidgetState extends State<PosReceiptDialogWidget> {
             ),
           ),
           IconButton(
+            onPressed: _openPrinterSettings,
+            icon: const Icon(Icons.settings_outlined, size: 17),
+            color: AppTheme.tableHeaderText,
+            style: IconButton.styleFrom(
+              backgroundColor: AppTheme.sidebarBackgroundBlack,
+            ),
+            tooltip: 'Printer settings',
+          ),
+          const SizedBox(width: 6),
+          IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close, size: 18),
             color: AppTheme.tableHeaderText,
@@ -244,11 +267,43 @@ class _PosReceiptDialogWidgetState extends State<PosReceiptDialogWidget> {
     );
   }
 
+  Future<void> _openPrinterSettings() async {
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.82),
+      builder: (BuildContext context) => const PrinterSettingsDialog(),
+    );
+  }
+
   Future<void> _printReceipt() async {
+    if (_isPrinting) return;
+
+    if (!Get.isRegistered<ReceiptPrinter>()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No invoice printer is configured.')),
+      );
+      return;
+    }
+
     setState(() => _isPrinting = true);
 
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    final ReceiptDocument receipt = _buildReceiptDocument();
+    final String receiptUrl = ReceiptLink.forDocument(receipt).toString();
+
+    final ReceiptPrintResult result = await Get.find<ReceiptPrinter>()
+        .printReceipt(receipt, qrData: receiptUrl);
+
     if (!mounted) return;
+
+    if (!result.isSuccess) {
+      setState(() => _isPrinting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.error ?? 'The receipt could not be printed.'),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isPrinting = false;

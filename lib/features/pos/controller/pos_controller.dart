@@ -236,14 +236,6 @@ class PosController extends GetxController {
     cashReceived.value = total;
   }
 
-  void holdOrder() {
-    // TODO: persist the current cart as a held ticket
-  }
-
-  void splitBill() {
-    // TODO: open the split bill flow
-  }
-
   void printKitchenTicket() {
     // TODO: send the current cart to the kitchen printer
   }

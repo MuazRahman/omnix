@@ -52,33 +52,44 @@ void main() {
   });
 
   group('ReceiptLink', () {
-    test('builds a hash URL that points at the hosted receipt route', () {
+    test('builds a hash URL that points at the hosted receipt route with invoice only', () {
       final ReceiptDocument document = sampleDocument();
       final Uri uri = ReceiptLink.forDocument(document);
 
-      expect(uri.fragment, startsWith('${AppRoutes.receipt}?d='));
+      expect(uri.fragment, startsWith('${AppRoutes.receipt}?invoice='));
       expect(uri.path, '/');
 
       final Uri? request = ReceiptLink.requestFromUri(uri);
       expect(request, isNotNull);
-      expect(ReceiptLink.documentFromUri(request)?.invoiceNumber, 1042);
+      expect(ReceiptLink.invoiceFromUri(request), document.invoiceNumber);
     });
 
     test('recognises both hash and path receipt URLs', () {
-      final String token = sampleDocument().encode();
+      final ReceiptDocument document = sampleDocument();
 
-      final Uri hashUri = Uri.parse(
-        'https://pos.example.com/#/receipt?d=$token',
-      );
+      final Uri hashUri = Uri.parse('https://pos.example.com/#/receipt?invoice=${document.invoiceNumber}');
       expect(ReceiptLink.requestFromUri(hashUri)?.path, AppRoutes.receipt);
 
-      final Uri pathUri = Uri.parse('https://pos.example.com/receipt?d=$token');
+      final Uri pathUri = Uri.parse('https://pos.example.com/receipt?invoice=${document.invoiceNumber}');
       expect(ReceiptLink.requestFromUri(pathUri)?.path, AppRoutes.receipt);
 
       expect(
         ReceiptLink.requestFromUri(Uri.parse('https://pos.example.com/')),
         isNull,
       );
+    });
+
+    test('backwards compatibility for old ?d= encoded URLs', () {
+      final ReceiptDocument document = sampleDocument();
+      final String token = document.encode();
+
+      final Uri legacyUri = Uri.parse('https://pos.example.com/#/receipt?d=$token');
+      final Uri? request = ReceiptLink.requestFromUri(legacyUri);
+      expect(request, isNotNull);
+      expect(ReceiptLink.documentFromUri(request), isNotNull);
+      expect(ReceiptLink.documentFromUri(request)?.invoiceNumber, document.invoiceNumber);
+
+      expect(ReceiptLink.invoiceFromUri(request), isNull);
     });
   });
 
@@ -97,7 +108,7 @@ void main() {
       expect(find.text('SALE INVOICE #1042'), findsOneWidget);
       expect(find.text('Beef Burger'), findsOneWidget);
       expect(find.text('NET TOTAL:'), findsOneWidget);
-      expect(find.byType(QrImageView), findsOneWidget);
+      expect(find.text('Scan for invoice details'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -118,7 +129,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('shows a discount when cash is below the net total', (
+    testWidgets('shows discount when cash is below the net total', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -162,22 +173,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('shows a friendly error for an invalid token', (
+    testWidgets('shows invoice lookup message for short invoice-only URLs', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: PublicReceiptScreen(
-            document: ReceiptDocument.tryDecode('broken'),
-            invoiceNumber: 1042,
-          ),
-        ),
+        MaterialApp(home: PublicReceiptScreen(invoiceNumber: 1042)),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Receipt not found'), findsOneWidget);
+      expect(find.text('Invoice lookup'), findsOneWidget);
+      expect(
+        find.textContaining('This receipt link points to invoice number only'),
+        findsOneWidget,
+      );
       expect(find.text('Invoice #1042'), findsOneWidget);
       expect(find.byType(QrImageView), findsNothing);
+      expect(tester.takeException(), isNull);
     });
   });
 }

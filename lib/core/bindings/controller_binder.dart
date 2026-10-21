@@ -7,6 +7,9 @@ import 'package:omnix/features/menu/controller/menu_controller.dart';
 import 'package:omnix/features/orders/controller/order_controller.dart';
 import 'package:omnix/features/pos/controller/pos_controller.dart';
 import 'package:omnix/features/purchases/controller/purchase_controller.dart';
+import 'package:omnix/features/receipt/controller/printer_settings_controller.dart';
+import 'package:omnix/features/receipt/printer/receipt_printer.dart';
+import 'package:omnix/features/receipt/printer/spool_receipt_printer.dart';
 import 'package:omnix/features/reports/controller/report_controller.dart';
 import 'package:omnix/features/staff/controller/staff_controller.dart';
 
@@ -24,5 +27,12 @@ class ControllerBinder extends Bindings {
     Get.put(CustomerController());
     Get.put(ReportController());
     Get.put(StaffController());
+
+    // receipt printing on the 80mm printer attached to this PC
+    final PrinterSettingsController printerSettings =
+        Get.put(PrinterSettingsController());
+    Get.put<ReceiptPrinter>(
+      SpoolReceiptPrinter(settings: printerSettings),
+    );
   }
 }

@@ -6,6 +6,9 @@ import 'package:omnix/features/menu/model/menu_item_model.dart';
 class DummyMenuItemData {
   const DummyMenuItemData._();
 
+  // branch these rows belong to; the POS only sells the selected branch's menu
+  static const String branchId = 'DHK-01';
+
   static const List<String> categories = [
     'All',
     'Starters',
@@ -22,7 +25,9 @@ class DummyMenuItemData {
       category: 'Starters',
       price: 320,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 12,
+      imageUrl: 'assets/images/menu/m-001.jpg',
     ),
     MenuItem(
       id: 'M-002',
@@ -30,7 +35,9 @@ class DummyMenuItemData {
       category: 'Starters',
       price: 280,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 8,
+      imageUrl: 'assets/images/menu/m-002.jpg',
     ),
     MenuItem(
       id: 'M-003',
@@ -38,7 +45,9 @@ class DummyMenuItemData {
       category: 'Starters',
       price: 180,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 6,
+      imageUrl: 'assets/images/menu/m-003.jpg',
     ),
     MenuItem(
       id: 'M-004',
@@ -46,7 +55,9 @@ class DummyMenuItemData {
       category: 'Main Course',
       price: 420,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 15,
+      imageUrl: 'assets/images/menu/m-004.jpg',
     ),
     MenuItem(
       id: 'M-005',
@@ -54,7 +65,9 @@ class DummyMenuItemData {
       category: 'Main Course',
       price: 550,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 18,
+      imageUrl: 'assets/images/menu/m-005.jpg',
     ),
     MenuItem(
       id: 'M-006',
@@ -62,7 +75,9 @@ class DummyMenuItemData {
       category: 'Main Course',
       price: 780,
       isAvailable: false,
+      branchId: branchId,
       preparationTime: 25,
+      imageUrl: 'assets/images/menu/m-006.jpg',
     ),
     MenuItem(
       id: 'M-007',
@@ -70,7 +85,9 @@ class DummyMenuItemData {
       category: 'Main Course',
       price: 520,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 20,
+      imageUrl: 'assets/images/menu/m-007.jpg',
     ),
     MenuItem(
       id: 'M-008',
@@ -78,7 +95,9 @@ class DummyMenuItemData {
       category: 'Main Course',
       price: 590,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 18,
+      imageUrl: 'assets/images/menu/m-008.jpg',
     ),
     MenuItem(
       id: 'M-009',
@@ -86,7 +105,9 @@ class DummyMenuItemData {
       category: 'Rice',
       price: 260,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 14,
+      imageUrl: 'assets/images/menu/m-009.jpg',
     ),
     MenuItem(
       id: 'M-010',
@@ -94,7 +115,9 @@ class DummyMenuItemData {
       category: 'Rice',
       price: 340,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 22,
+      imageUrl: 'assets/images/menu/m-010.jpg',
     ),
     MenuItem(
       id: 'M-011',
@@ -102,7 +125,9 @@ class DummyMenuItemData {
       category: 'Rice',
       price: 180,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 10,
+      imageUrl: 'assets/images/menu/m-011.jpg',
     ),
     MenuItem(
       id: 'M-012',
@@ -110,7 +135,9 @@ class DummyMenuItemData {
       category: 'Dessert',
       price: 240,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 5,
+      imageUrl: 'assets/images/menu/m-012.jpg',
     ),
     MenuItem(
       id: 'M-013',
@@ -118,7 +145,9 @@ class DummyMenuItemData {
       category: 'Dessert',
       price: 200,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 4,
+      imageUrl: 'assets/images/menu/m-013.jpg',
     ),
     MenuItem(
       id: 'M-014',
@@ -126,7 +155,9 @@ class DummyMenuItemData {
       category: 'Drinks',
       price: 120,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 3,
+      imageUrl: 'assets/images/menu/m-014.jpg',
     ),
     MenuItem(
       id: 'M-015',
@@ -134,7 +165,9 @@ class DummyMenuItemData {
       category: 'Drinks',
       price: 80,
       isAvailable: true,
+      branchId: branchId,
       preparationTime: 2,
+      imageUrl: 'assets/images/menu/m-015.jpg',
     ),
   ];
 }

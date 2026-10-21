@@ -242,34 +242,28 @@ class ReceiptPaperWidget extends StatelessWidget {
   }
 
   Widget _buildQrBlock(String data) {
+    const double boxSize = 116;
+
     return Column(
       spacing: 3,
       children: [
         Container(
-          width: 140,
-          height: 140,
-          padding: const EdgeInsets.all(8),
+          width: boxSize,
+          height: boxSize,
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
           ),
-          child: QrImageView(
+          child: _ReceiptQr(
             data: data,
-            version: QrVersions.auto,
-            size: 124,
-            padding: EdgeInsets.zero,
-            backgroundColor: Colors.white,
+            size: boxSize - 8,
             semanticsLabel: 'Invoice ${document.invoiceNumber} QR code',
-            errorStateBuilder: (BuildContext context, Object? error) {
-              return const Center(
-                child: Icon(Icons.qr_code_2, size: 112, color: Colors.black87),
-              );
-            },
           ),
         ),
         const Text(
           'Scan for invoice details',
-          style: TextStyle(fontSize: 8.5, color: AppTheme.tableHeaderText),
+          style: TextStyle(fontSize: 7.5, color: AppTheme.tableHeaderText),
         ),
         _buildThankYou(),
       ],
@@ -286,6 +280,144 @@ class ReceiptPaperWidget extends StatelessWidget {
         color: AppTheme.white,
       ),
     );
+  }
+}
+
+class _ReceiptQr extends StatefulWidget {
+  const _ReceiptQr({
+    required this.data,
+    required this.size,
+    required this.semanticsLabel,
+  });
+
+  final String data;
+  final double size;
+  final String semanticsLabel;
+
+  @override
+  State<_ReceiptQr> createState() => _ReceiptQrState();
+}
+
+class _ReceiptQrState extends State<_ReceiptQr> {
+  QrImage? _image;
+
+  @override
+  void initState() {
+    super.initState();
+    _image = _encode(widget.data);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReceiptQr oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data != widget.data) {
+      _image = _encode(widget.data);
+    }
+  }
+
+  static QrImage? _encode(String data) {
+    if (data.trim().isEmpty) return null;
+    try {
+      return QrImage(
+        QrCode.fromData(
+          data: data,
+          errorCorrectLevel: QrErrorCorrectLevel.Q,
+        ),
+      );
+    } on Exception {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final QrImage? image = _image;
+
+    return Semantics(
+      label: widget.semanticsLabel,
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: image == null
+            ? Icon(
+                Icons.qr_code_2,
+                size: widget.size - 8,
+                color: Colors.black87,
+              )
+            : CustomPaint(
+                painter: _ReceiptQrPainter(
+                  image,
+                  MediaQuery.devicePixelRatioOf(context),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// Paints the QR module grid straight onto the canvas.
+///
+/// [QrImageView] sizes every module by rounding its width to half a pixel and
+/// then centres the result, which leaves a visible white frame and soft,
+/// unreadable modules once the code is made small. This painter fills the whole
+/// box edge to edge, merges each run of dark modules into one rectangle and
+/// snaps the edges to physical pixels, so the QR stays sharp at any size.
+class _ReceiptQrPainter extends CustomPainter {
+  const _ReceiptQrPainter(this.image, this.devicePixelRatio);
+
+  final QrImage image;
+  final double devicePixelRatio;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final int moduleCount = image.moduleCount;
+    if (moduleCount <= 0) return;
+
+    final double edge = size.shortestSide;
+    final double moduleSize = edge / moduleCount;
+    final double ratio = devicePixelRatio <= 0 ? 1 : devicePixelRatio;
+
+    double snap(double value) => (value * ratio).roundToDouble() / ratio;
+
+    final Paint dark = Paint()
+      ..color = Colors.black
+      ..isAntiAlias = false
+      ..style = PaintingStyle.fill;
+
+    for (int row = 0; row < moduleCount; row++) {
+      final double top = snap(row * moduleSize);
+      final double bottom = snap((row + 1) * moduleSize);
+      if (bottom <= top) continue;
+
+      int column = 0;
+      while (column < moduleCount) {
+        if (!image.isDark(row, column)) {
+          column++;
+          continue;
+        }
+
+        final int runStart = column;
+        while (column < moduleCount && image.isDark(row, column)) {
+          column++;
+        }
+
+        canvas.drawRect(
+          Rect.fromLTRB(
+            snap(runStart * moduleSize),
+            top,
+            snap(column * moduleSize),
+            bottom,
+          ),
+          dark,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ReceiptQrPainter oldDelegate) {
+    return oldDelegate.image != image ||
+        oldDelegate.devicePixelRatio != devicePixelRatio;
   }
 }
 

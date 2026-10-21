@@ -4,12 +4,15 @@ import 'package:omnix/features/receipt/model/receipt_document.dart';
 
 /// Builds and reads the hosted receipt URL.
 ///
-/// Hash routing is used on purpose: `https://host/#/receipt?d=...` works on
-/// static hosts without a rewrite rule. The page can later accept an
-/// `invoice` query parameter and fetch the document from the API instead.
+/// Hash routing is used on purpose: `https://host/#/receipt?invoice=1234`
+/// works on static hosts without a rewrite rule. The hosted page fetches the
+/// receipt document from the API using the invoice number instead of
+/// embedding the full document in the URL.
 abstract final class ReceiptLink {
   const ReceiptLink._();
 
+  /// Builds a short URL that carries only the invoice number. The hosted
+  /// receipt page opens this URL and fetches the document from the API.
   static Uri forDocument(ReceiptDocument document) {
     final Uri base = Uri.parse(AppConfig.receiptBaseUrl);
     final String path = base.path.isEmpty
@@ -19,7 +22,7 @@ abstract final class ReceiptLink {
 
     return normalizedBase.replace(
       fragment:
-          '${AppRoutes.receipt}?d=${Uri.encodeQueryComponent(document.encode())}',
+          '${AppRoutes.receipt}?invoice=${document.invoiceNumber}',
     );
   }
 
@@ -32,8 +35,8 @@ abstract final class ReceiptLink {
     return requestFromUri(Uri.parse(routeName));
   }
 
-  /// Accepts both path URLs (`/receipt?d=...`) and hash URLs
-  /// (`/#/receipt?d=...`).
+  /// Accepts both path URLs (`/receipt?invoice=...`) and hash URLs
+  /// (`/#/receipt?invoice=...`).
   static Uri? requestFromUri(Uri uri) {
     if (_isReceiptUri(uri)) return uri;
 
@@ -45,6 +48,8 @@ abstract final class ReceiptLink {
     return null;
   }
 
+  /// Reads the document token from legacy `?d=` URLs, kept for backward
+  /// compatibility with receipts printed before this change.
   static ReceiptDocument? documentFromUri(Uri? uri) {
     final String? token = uri?.queryParameters['d'];
     if (token == null || token.isEmpty) return null;

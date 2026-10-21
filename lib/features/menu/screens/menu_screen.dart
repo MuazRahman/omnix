@@ -10,6 +10,7 @@ import 'package:omnix/features/common/widgets/status_pill_widget.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/menu/controller/menu_controller.dart';
 import 'package:omnix/features/menu/model/menu_item_model.dart';
+import 'package:omnix/features/menu/widgets/menu_item_image_widget.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -105,10 +106,26 @@ class MenuScreen extends StatelessWidget {
 
   List<Widget> buildCells(MenuItem item) {
     return [
-      DataTableWidget.text(
-        item.name,
-        color: AppTheme.badgeAmberText,
-        weight: FontWeight.w600,
+      // dish photo plus name, mirrors the POS tiles
+      Row(
+        spacing: 10,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: SizedBox(
+              width: 34,
+              height: 34,
+              child: MenuItemImageWidget(imageUrl: item.imageUrl),
+            ),
+          ),
+          Expanded(
+            child: DataTableWidget.text(
+              item.name,
+              color: AppTheme.badgeAmberText,
+              weight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
       DataTableWidget.text(item.category, weight: FontWeight.w500),
       DataTableWidget.text(

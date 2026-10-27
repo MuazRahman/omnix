@@ -145,6 +145,53 @@ class MenuController extends GetxController {
     return item;
   }
 
+  /// Applies edits made in the dish dialog to an existing catalog row.
+  ///
+  /// Passing [recipeCost] as `null` re-estimates food cost at 40% of the new
+  /// selling price, matching [addMenuItem]. [imageBytes] replaces the current
+  /// picture; passing `null` clears a locally picked one and falls back to
+  /// [MenuItem.imageUrl].
+  MenuItem? updateMenuItem(
+    MenuItem item, {
+    required String name,
+    required String category,
+    required int price,
+    String banglaName = '',
+    String kitchenStation = 'Main Kitchen',
+    int? recipeCost,
+    Uint8List? imageBytes,
+    required bool isAvailable,
+  }) {
+    final int index = menuItems.indexWhere((MenuItem row) => row.id == item.id);
+    if (index == -1) return null;
+
+    final MenuItem updated = MenuItem(
+      id: item.id,
+      name: name.trim(),
+      banglaName: banglaName.trim(),
+      category: category,
+      price: price,
+      recipeCost: recipeCost ?? (price * 0.4).round(),
+      isAvailable: isAvailable,
+      branchId: item.branchId,
+      imageUrl: item.imageUrl,
+      imageBytes: imageBytes,
+      isLowStock: isAvailable ? item.isLowStock : false,
+      isBestseller: item.isBestseller,
+      modifierCount: item.modifierCount,
+      modifierSummary: item.modifierSummary,
+      soldToday: item.soldToday,
+      preparationTime: item.preparationTime,
+      kitchenStation: kitchenStation,
+    );
+
+    menuItems[index] = updated;
+
+    _notify('Dish updated', '${updated.name} was saved to the catalog.');
+
+    return updated;
+  }
+
   String _nextMenuId() {
     final RegExp trailingNumber = RegExp(r'(\d+)$');
     int highest = 0;

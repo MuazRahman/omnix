@@ -79,6 +79,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('edit dish dialog is pre-filled and saves changes', (
+    WidgetTester tester,
+  ) async {
+    await pumpMenu(tester, const Size(1920, 1080));
+
+    await tester.tap(find.byTooltip('Edit dish').first);
+    await tester.pumpAndSettle();
+
+    // The shared form switches to its edit mode.
+    expect(find.text('Edit Menu Item'), findsOneWidget);
+    expect(find.text('Save Changes'), findsOneWidget);
+
+    // The existing name is loaded into the field.
+    final TextFormField nameField = tester.widget<TextFormField>(
+      find.byKey(const Key('menu-dish-name-field')),
+    );
+    expect(nameField.controller?.text, 'Lemon Tea');
+
+    await tester.enterText(
+      find.byKey(const Key('menu-dish-name-field')),
+      'Renamed Special',
+    );
+    await tester.tap(find.byKey(const Key('menu-dish-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Renamed Special'), findsOneWidget);
+    expect(find.text('Lemon Tea'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    // Drop the confirmation snackbar so its timer does not outlive the test.
+    Get.closeAllSnackbars();
+    await tester.pumpAndSettle();
+  });
+
   for (final Size size in const [Size(700, 1000), Size(500, 900)]) {
     testWidgets(
       'menu screen stays usable at ${size.width.toInt()}px wide',

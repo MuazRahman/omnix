@@ -118,6 +118,6 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _editDish(MenuItem item) {
-    Get.find<MenuController>().showComingSoon('Dish editor');
+    showMenuEditDishDialog(context, Get.find<MenuController>(), item);
   }
 }

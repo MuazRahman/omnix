@@ -3,6 +3,7 @@ import 'package:flutter/material.dart' hide MenuController;
 import 'package:flutter/services.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/menu/controller/menu_controller.dart';
+import 'package:omnix/features/menu/model/menu_item_model.dart';
 
 /// Opens the quick-add dialog for a new menu item.
 Future<bool?> showMenuAddDishDialog(
@@ -19,11 +20,32 @@ Future<bool?> showMenuAddDishDialog(
   );
 }
 
-/// Compact "Add Menu Item" form modelled on the catalog modal.
+/// Opens the dish form pre-filled with [item], saving the edits on submit.
+Future<bool?> showMenuEditDishDialog(
+  BuildContext context,
+  MenuController controller,
+  MenuItem item,
+) {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    barrierColor: Colors.black.withValues(alpha: 0.74),
+    builder: (BuildContext context) {
+      return MenuAddDishDialog(controller: controller, item: item);
+    },
+  );
+}
+
+/// Compact dish form modelled on the catalog modal.
+///
+/// Without [item] it adds a new dish; with one it edits that row instead.
 class MenuAddDishDialog extends StatefulWidget {
-  const MenuAddDishDialog({super.key, required this.controller});
+  const MenuAddDishDialog({super.key, required this.controller, this.item});
 
   final MenuController controller;
+
+  /// Existing row being edited, or `null` when adding a new dish.
+  final MenuItem? item;
 
   @override
   State<MenuAddDishDialog> createState() => _MenuAddDishDialogState();
@@ -50,12 +72,38 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
   @override
   void initState() {
     super.initState();
-    _category = widget.controller.categories.firstWhere(
-      (String category) => category != 'All',
-      orElse: () => 'General',
-    );
-    _kitchenStation = MenuController.kitchenStations.first;
+
+    final MenuItem? item = widget.item;
+
+    final List<String> selectableCategories = widget.controller.categories
+        .where((String category) => category != 'All')
+        .toList();
+    _category = item != null && selectableCategories.contains(item.category)
+        ? item.category
+        : selectableCategories.firstWhere(
+            (String category) => category != 'All',
+            orElse: () => 'General',
+          );
+
+    final String? station = item?.kitchenStation;
+    _kitchenStation =
+        station != null && MenuController.kitchenStations.contains(station)
+        ? station
+        : MenuController.kitchenStations.first;
+
+    _isAvailable = item?.isAvailable ?? true;
+
+    if (item != null) {
+      _nameController.text = item.name;
+      _banglaController.text = item.banglaName;
+      _priceController.text = item.price > 0 ? '${item.price}' : '';
+      _costController.text = item.recipeCost > 0 ? '${item.recipeCost}' : '';
+      _imageBytes = item.imageBytes;
+      _imageName = item.imageBytes == null ? null : item.name;
+    }
   }
+
+  bool get _isEditing => widget.item != null;
 
   @override
   void dispose() {
@@ -138,14 +186,14 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
         crossAxisAlignment: .start,
         spacing: 12,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: .start,
               spacing: 3,
               children: [
                 Text(
-                  'Add Menu Item',
-                  style: TextStyle(
+                  _isEditing ? 'Edit Menu Item' : 'Add Menu Item',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
@@ -153,8 +201,10 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
                   ),
                 ),
                 Text(
-                  'Quickly add a dish to your menu.',
-                  style: TextStyle(
+                  _isEditing
+                      ? 'Update this dish and save the changes.'
+                      : 'Quickly add a dish to your menu.',
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppTheme.tableHeaderText,
                   ),
@@ -662,8 +712,8 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
           FilledButton.icon(
             key: const Key('menu-dish-submit-button'),
             onPressed: _submit,
-            icon: const Icon(Icons.add, size: 17),
-            label: const Text('Add Dish'),
+            icon: Icon(_isEditing ? Icons.check : Icons.add, size: 17),
+            label: Text(_isEditing ? 'Save Changes' : 'Add Dish'),
             style: FilledButton.styleFrom(
               backgroundColor: AppTheme.amber,
               foregroundColor: AppTheme.windowWidgetBackgroundBlack,
@@ -744,16 +794,31 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
     final String costText = _costController.text.trim();
     final int? recipeCost = costText.isEmpty ? null : int.tryParse(costText);
 
-    widget.controller.addMenuItem(
-      name: _nameController.text,
-      banglaName: _banglaController.text,
-      category: _category,
-      kitchenStation: _kitchenStation,
-      price: price,
-      recipeCost: recipeCost,
-      imageBytes: _imageBytes,
-      isAvailable: _isAvailable,
-    );
+    final MenuItem? editing = widget.item;
+    if (editing == null) {
+      widget.controller.addMenuItem(
+        name: _nameController.text,
+        banglaName: _banglaController.text,
+        category: _category,
+        kitchenStation: _kitchenStation,
+        price: price,
+        recipeCost: recipeCost,
+        imageBytes: _imageBytes,
+        isAvailable: _isAvailable,
+      );
+    } else {
+      widget.controller.updateMenuItem(
+        editing,
+        name: _nameController.text,
+        banglaName: _banglaController.text,
+        category: _category,
+        kitchenStation: _kitchenStation,
+        price: price,
+        recipeCost: recipeCost,
+        imageBytes: _imageBytes,
+        isAvailable: _isAvailable,
+      );
+    }
 
     Navigator.of(context).pop(true);
   }

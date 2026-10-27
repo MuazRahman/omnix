@@ -46,7 +46,10 @@ class PosMenuItemCardWidget extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               // Full bleed dish photo
-              MenuItemImageWidget(imageUrl: item.imageUrl),
+              MenuItemImageWidget(
+                imageUrl: item.imageUrl,
+                imageBytes: item.imageBytes,
+              ),
 
               // Scrim that keeps the name, price and button readable
               const DecoratedBox(
@@ -144,9 +147,7 @@ class PosMenuItemCardWidget extends StatelessWidget {
 
   Widget _buildSoldOutOverlay() {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6)),
       child: const Center(
         child: Text(
           'SOLD OUT',
@@ -215,9 +216,7 @@ class _AddButton extends StatelessWidget {
         : AppTheme.lightAmberWhite;
 
     return Material(
-      color: isAvailable
-          ? background
-          : Colors.black.withValues(alpha: 0.35),
+      color: isAvailable ? background : Colors.black.withValues(alpha: 0.35),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
@@ -239,8 +238,7 @@ class _AddButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                if (isAvailable)
-                  Icon(Icons.add, size: 15, color: foreground),
+                if (isAvailable) Icon(Icons.add, size: 15, color: foreground),
                 Text(
                   isAvailable
                       ? (isInCart ? 'Add · $quantity' : 'Add')

@@ -193,7 +193,7 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | `dashboard` | Shift overview: stats, sales chart, recent orders, branch performance | `DashBoardController` | 4 dummy files | `dashboard_screen.dart` + 5 widgets |
 | `pos` | Sell menu items, build cart, attach customer, take payment, print receipt | `PosController` | `DummyMenuItemData`, `DummyPosData` | `pos_screen.dart` + 16 widgets |
 | `orders` | Ledger of all tickets, status flow, settlement, void/refund, KOT/receipt, CSV export | `OrderController` | `DummyOrderData` | `orders_screen.dart` + 7 widgets + KOT PDF builder |
-| `menu` | Browse/search/filter dishes, show availability and price | `MenuController` | `DummyMenuItemData` | `menu_screen.dart` + image widget |
+| `menu` | Browse/search/filter/sort dishes, table/grid catalog, availability, margins, modifier presets | `MenuController` | `DummyMenuItemData`, `DummyMenuModifierData` | `menu_screen.dart` + 12 widgets |
 | `inventory` | Stock levels, reorder levels, stock value | `InventoryController` | `DummyInventoryData` | `inventory_screen.dart` |
 | `purchases` | Purchase orders by supplier/status | `PurchaseController` | `DummyPurchaseData` | `purchases_screen.dart` |
 | `customers` | Customer directory, phone-first add/attach | `CustomerController` | `DummyCustomerData` | `customers_screen.dart` + phone dialog |
@@ -274,11 +274,21 @@ places (`MainLayoutShellController` and the sidebar widgets).
 
 | File | Purpose |
 | --- | --- |
-| `menu/controller/menu_controller.dart` | Categories, search, items, `filteredItems`, available/unavailable counts. |
-| `menu/model/menu_item_model.dart` | `MenuItem(id, name, category, price, isAvailable, branchId, imageUrl, preparationTime)` + `fromJson`. |
-| `menu/dummy_data/dummy_menu_item_data.dart` | Categories + 15 dishes with asset images, branch `DHK-01`. |
-| `menu/screens/menu_screen.dart` | Header, category chips, table with photo/name, category, prep time, status, price. Add Item is a no-op. |
+| `menu/controller/menu_controller.dart` | Categories, search, branch, sort, table/grid view, paging; `filteredItems`, `pagedItems`, catalog stats; availability toggle, duplicate, archive. |
+| `menu/model/menu_item_model.dart` | `MenuItem` with id/name/Bangla alias/category/price/recipe cost/availability/branch/image/prep time/bestseller/low-stock/modifiers/sales + margin getters, `copyWith`, `fromJson`. |
+| `menu/model/menu_modifier_group_model.dart` | `MenuModifierGroup` and `MenuModifierOption` presets. |
+| `menu/dummy_data/dummy_menu_item_data.dart` | Categories + 15 dishes with asset images, Bangla aliases, costs and modifier metadata, branch `DHK-01`. |
+| `menu/dummy_data/dummy_menu_modifier_data.dart` | Spice level, portion and add-on modifier presets. |
+| `menu/screens/menu_screen.dart` | Header, health ribbon, filter bar, table/grid catalog, insight cards, pagination and end-drawer modifier presets. Add/edit/import/category manager remain no-ops. |
 | `menu/widgets/menu_item_image_widget.dart` | Asset-or-network image; no placeholder icon (missing file = dark tile). |
+| `menu/widgets/menu_header_widget.dart` | Breadcrumb, title, modifier/bulk-import/add-dish actions. |
+| `menu/widgets/menu_stat_ribbon_widget.dart` | Active dishes, food-cost margin, kitchen availability and top segment metrics. |
+| `menu/widgets/menu_filter_bar_widget.dart` | Category chips, search, branch, sort and table/grid toggle. |
+| `menu/widgets/menu_table_widget.dart` | Responsive catalog table (full/compact/narrow columns) + row actions. |
+| `menu/widgets/menu_grid_view_widget.dart` | Card catalog view for smaller widths. |
+| `menu/widgets/menu_pagination_footer_widget.dart` | Page range, previous/next and page indicator. |
+| `menu/widgets/menu_insight_cards_widget.dart` | Branch pricing, margin watch and modifier preset cards. |
+| `menu/widgets/menu_modifier_drawer_widget.dart` | End drawer for modifier presets. |
 | `inventory/controller/inventory_controller.dart` | Categories, search, items, `filteredItems`, low/out counts, total value. |
 | `inventory/model/inventory_item_model.dart` | `StockLevel`, `InventoryItem` + `fromJson`; value getters. |
 | `inventory/dummy_data/dummy_inventory_data.dart` | Categories + stock rows. |
@@ -576,8 +586,10 @@ is "rush".
 
 ### 8.5 Other sections
 
-- **Menu:** category chips + search filter the table; photo, category, prep time,
-  availability pill, price. Add Item is a no-op.
+- **Menu:** category chips + search/sort/branch filters drive a responsive table or
+  card grid with paging, availability toggles, duplicate/archive actions and margin
+  metrics; modifier presets open in an end drawer. Add/edit/bulk import/category
+  manager are no-ops.
 - **Inventory:** stat cards (low stock, out of stock, stock value), category filter,
   table with quantity/reorder/status/value. Add Stock is a no-op.
 - **Purchases:** status chips + search filter POs; table shows PO, supplier, item
@@ -646,6 +658,7 @@ is "rush".
 | `pos_screen_test.dart` | Large suite: layout sizes, dine-in vs takeaway/delivery, customer attach flow, new customer without name (`N/A`), cash change/discount, wallet cashout, cart quantity, receipt preview/QR. |
 | `customers_screen_test.dart` | Add Customer phone-first flow, duplicate phone handling, table refresh. |
 | `menu_item_image_test.dart` | Every dummy dish has branch id + bundled asset that loads (>1000 bytes). |
+| `menu_screen_test.dart` | Catalog + health ribbon render, category/search filters, table/grid toggle, 700px and 500px layouts. |
 | `receipt_page_test.dart` | `ReceiptDocument` round-trip, legacy `?d=` parsing, hash/path receipt URLs, public page rendering, phone width, discount/change, invoice-only lookup. |
 | `receipt_pdf_test.dart` | PDF starts with `%PDF-`, copies add pages, no-QR build, printer test slip. |
 

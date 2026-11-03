@@ -27,6 +27,9 @@ class PosController extends GetxController {
 
   final String cashierName = DummyPosData.cashierName;
 
+  // floor server assigned to the open ticket
+  final serverName = DummyPosData.defaultServer.obs;
+
   final selectedCategory = 0.obs;
 
   final searchText = ''.obs;
@@ -38,7 +41,7 @@ class PosController extends GetxController {
   // order being built on this ticket
   final orderType = PosOrderType.dineIn.obs;
 
-  final tableLabel = DummyPosData.tables.first.obs;
+  final tableLabel = DummyPosData.defaultTable.obs;
 
   final paxCount = DummyPosData.defaultPax.obs;
 
@@ -93,6 +96,10 @@ class PosController extends GetxController {
 
   void paxOnChanged(int value) {
     paxCount.value = value;
+  }
+
+  void serverOnChanged(String value) {
+    serverName.value = value;
   }
 
   void customerOnChanged(PosCustomer? value) {

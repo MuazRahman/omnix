@@ -5,6 +5,7 @@ import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/pos/controller/pos_controller.dart';
+import 'package:omnix/features/pos/widgets/new_sale_dialog_widget.dart';
 import 'package:omnix/features/pos/widgets/pos_cart_panel_widget.dart';
 import 'package:omnix/features/pos/widgets/pos_category_bar_widget.dart';
 import 'package:omnix/features/pos/widgets/pos_menu_grid_widget.dart';
@@ -26,8 +27,25 @@ class _PosScreenState extends State<PosScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
+  // keeps the search field in sync when a controller reset such as
+  // startNewSale() clears the query without touching the text field
+  late final Worker _searchTextWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchTextWorker = ever<String>(_posController.searchText, (String value) {
+      if (_searchController.text == value) return;
+      _searchController.text = value;
+      _searchController.selection = TextSelection.collapsed(
+        offset: value.length,
+      );
+    });
+  }
+
   @override
   void dispose() {
+    _searchTextWorker.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -38,7 +56,7 @@ class _PosScreenState extends State<PosScreen> {
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
         SingleActivator(LogicalKeyboardKey.keyS, alt: true): _focusSearch,
-        const SingleActivator(LogicalKeyboardKey.f2): _startNewSale,
+        const SingleActivator(LogicalKeyboardKey.f2): _openNewSaleDialog,
         const SingleActivator(LogicalKeyboardKey.enter): _handleEnter,
         const SingleActivator(LogicalKeyboardKey.escape): _handleEscape,
       },
@@ -135,10 +153,9 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
-  void _startNewSale() {
-    _searchController.clear();
+  void _openNewSaleDialog() {
     _searchFocusNode.unfocus();
-    _posController.startNewSale();
+    openNewSaleDialog(context);
   }
 
   // Enter charges the ticket, unless a dialog is open or the cashier is typing

@@ -56,9 +56,9 @@ class PosTicketHeaderWidget extends StatelessWidget {
                     posController.isDineIn
                         ? '${posController.orderType.value.label} · '
                               'Table ${posController.tableLabel.value} · '
-                              'Server: ${posController.cashierName}'
+                              'Server: ${posController.serverName.value}'
                         : '${posController.orderType.value.label} · '
-                              'Server: ${posController.cashierName}',
+                              'Server: ${posController.serverName.value}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

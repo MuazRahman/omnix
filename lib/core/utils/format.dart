@@ -24,3 +24,39 @@ String formatClock(DateTime time) {
 
   return '$hour:$minute $period';
 }
+
+// month abbreviations used by formatShortDate
+const List<String> _monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+// Oct 25
+String formatShortDate(DateTime date) =>
+    '${_monthNames[date.month - 1]} ${date.day}';
+
+// Today / Tomorrow / Oct 25, relative to the current day
+String formatDayLabel(DateTime date) {
+  final DateTime now = DateTime.now();
+  final DateTime today = DateTime(now.year, now.month, now.day);
+  final DateTime target = DateTime(date.year, date.month, date.day);
+  final int days = target.difference(today).inDays;
+
+  if (days == 0) return 'Today';
+  if (days == 1) return 'Tomorrow';
+  return formatShortDate(date);
+}
+
+// "Tomorrow, 9:00 AM"
+String formatSchedule(DateTime date) =>
+    '${formatDayLabel(date)}, ${formatClock(date)}';

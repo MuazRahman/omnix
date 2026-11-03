@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
-import 'package:omnix/core/utils/format.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
-import 'package:omnix/features/common/widgets/custom_container_widget.dart';
-import 'package:omnix/features/common/widgets/data_table_widget.dart';
-import 'package:omnix/features/common/widgets/section_header_widget.dart';
-import 'package:omnix/features/common/widgets/status_pill_widget.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/purchases/controller/purchase_controller.dart';
-import 'package:omnix/features/purchases/model/purchase_model.dart';
+import 'package:omnix/features/purchases/model/vendor_model.dart';
+import 'package:omnix/features/purchases/widgets/new_purchase_order_dialog_widget.dart';
+import 'package:omnix/features/purchases/widgets/purchases_header_widget.dart';
+import 'package:omnix/features/purchases/widgets/purchases_stat_ribbon_widget.dart';
+import 'package:omnix/features/purchases/widgets/purchases_tab_bar_widget.dart';
+import 'package:omnix/features/purchases/widgets/purchases_table_widget.dart';
+import 'package:omnix/features/purchases/widgets/receive_inbound_panel_widget.dart';
+import 'package:omnix/features/purchases/widgets/register_supplier_dialog_widget.dart';
+import 'package:omnix/features/purchases/widgets/vendor_directory_widget.dart';
 
 class PurchasesScreen extends StatelessWidget {
   const PurchasesScreen({super.key});
@@ -22,143 +25,174 @@ class PurchasesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.topbarBackgroundBlack,
-      body: Column(
-        children: [
-          // Appbar Header
-          TopBarWidget(branchController: branchController),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: .stretch,
+          children: [
+            // Global app bar
+            TopBarWidget(branchController: branchController),
 
-          // Title, search and add button
-          Obx(
-            () => SectionHeaderWidget(
-              title: 'Purchases',
-              subtitle:
-                  '${purchaseController.purchases.length} orders · ${formatTaka(purchaseController.filteredTotal)}',
-              searchHint: 'Search by id, supplier or item',
+            // Breadcrumb, title, search and quick actions
+            PurchasesHeaderWidget(
               onSearchChanged: purchaseController.searchOnChanged,
-              actionLabel: 'New Purchase',
-              actionIcon: Icons.add,
-              onAction: () {},
+              onRegisterSupplier: () => _registerSupplier(
+                context,
+                purchaseController,
+              ),
+              onNewPurchaseOrder: () =>
+                  _newPurchaseOrder(context, purchaseController),
             ),
-          ),
 
-          // Status filter
-          Obx(
-            () => Padding(
+            const SizedBox(height: 12),
+
+            // Procurement metrics
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                spacing: 8,
-                children: List.generate(
-                  purchaseController.statusFilters.length,
-                  (int index) => PurchaseFilterChip(
-                    label: purchaseController.statusFilters[index],
-                    isSelected:
-                        purchaseController.selectedStatus.value == index,
-                    onTap: () =>
-                        purchaseController.statusFilterOnChanged(index),
+              child: PurchasesStatRibbonWidget(controller: purchaseController),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Ledger / vendor tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: .centerLeft,
+                child: PurchasesTabBarWidget(controller: purchaseController),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Tab content
+            Obx(() {
+              if (purchaseController.selectedTab.value ==
+                  PurchasesTab.vendors) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: VendorDirectoryWidget(
+                    controller: purchaseController,
+                    onOrderPo: (Vendor vendor) => _newPurchaseOrder(
+                      context,
+                      purchaseController,
+                      vendor: vendor,
+                    ),
+                    onRegisterSupplier: () =>
+                        _registerSupplier(context, purchaseController),
+                  ),
+                );
+              }
+
+              return _PurchaseOrdersSection(
+                controller: purchaseController,
+              );
+            }),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Opens the supplier onboarding form; the controller owns the new vendor.
+  Future<Vendor?> _registerSupplier(
+    BuildContext context,
+    PurchaseController controller,
+  ) {
+    return showRegisterSupplierDialog(context: context, controller: controller);
+  }
+
+  // Opens the purchase order builder, optionally pre-filled with a vendor.
+  Future<bool?> _newPurchaseOrder(
+    BuildContext context,
+    PurchaseController controller, {
+    Vendor? vendor,
+  }) {
+    return showNewPurchaseOrderDialog(
+      context: context,
+      controller: controller,
+      initialVendor: vendor,
+    );
+  }
+}
+
+// Status chips, the PO ledger and the receive dock for the orders tab
+class _PurchaseOrdersSection extends StatelessWidget {
+  const _PurchaseOrdersSection({required this.controller});
+
+  final PurchaseController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: .stretch,
+      children: [
+        // Status filter
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SizedBox(
+            height: 34,
+            child: Obx(
+              () => SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  spacing: 8,
+                  children: List.generate(
+                    controller.statusFilters.length,
+                    (int index) => PurchaseFilterChip(
+                      key: Key(
+                        'purchases-filter-${controller.statusFilters[index]}',
+                      ),
+                      label: controller.statusFilters[index],
+                      isSelected: controller.selectedStatus.value == index,
+                      onTap: () => controller.statusFilterOnChanged(index),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+        ),
 
-          const SizedBox(height: 16),
+        const SizedBox(height: 16),
 
-          // Purchase table
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomContainerWidget(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Obx(() {
-                    final List<Purchase> purchases =
-                        purchaseController.filteredPurchases;
+        // Ledger + receive dock
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final Widget table = PurchasesTableWidget(
+                controller: controller,
+                onSelectPurchase: (purchase) =>
+                    controller.selectPurchase(purchase.id),
+                onExport: () => controller.exportPurchases(),
+              );
 
-                    return DataTableWidget(
-                      columns: const [
-                        DataTableColumn(
-                          label: 'PO Number',
-                          flex: 129,
-                          monospace: true,
-                        ),
-                        DataTableColumn(label: 'Supplier', flex: 200),
-                        DataTableColumn(label: 'Items', flex: 232),
-                        DataTableColumn(label: 'Status', flex: 129),
-                        DataTableColumn(label: 'Ordered At', flex: 150),
-                        DataTableColumn(
-                          label: 'Amount',
-                          flex: 111,
-                          alignRight: true,
-                          monospace: true,
-                        ),
-                      ],
-                      rows: purchases
-                          .map(
-                            (Purchase purchase) =>
-                                DataTableRow(cells: buildCells(purchase)),
-                          )
-                          .toList(),
-                      emptyMessage: 'No purchases match the filter',
-                    );
-                  }),
-                ),
-              ),
-            ),
+              final Widget dock = ReceiveInboundPanelWidget(
+                controller: controller,
+              );
+
+              if (constraints.maxWidth >= 1200) {
+                return Row(
+                  crossAxisAlignment: .start,
+                  spacing: 16,
+                  children: [
+                    Expanded(flex: 8, child: table),
+                    Expanded(flex: 4, child: dock),
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: .stretch,
+                children: [table, const SizedBox(height: 16), dock],
+              );
+            },
           ),
-
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  List<Widget> buildCells(Purchase purchase) {
-    return [
-      DataTableWidget.text(
-        purchase.id,
-        color: AppTheme.badgeAmberText,
-        weight: FontWeight.w600,
-        monospace: true,
-      ),
-      DataTableWidget.text(purchase.supplier, weight: FontWeight.w600),
-      DataTableWidget.text(purchase.itemsSummary, weight: FontWeight.w500),
-      StatusPillWidget(
-        label: _statusLabel(purchase.status),
-        tone: _statusTone(purchase.status),
-      ),
-      DataTableWidget.text(purchase.orderedAt, color: AppTheme.tableHeaderText),
-      DataTableWidget.text(
-        '৳${formatNumber(purchase.amount)}',
-        weight: FontWeight.w700,
-        monospace: true,
-      ),
-    ];
-  }
-
-  String _statusLabel(PurchaseStatus status) {
-    switch (status) {
-      case PurchaseStatus.draft:
-        return 'Draft';
-      case PurchaseStatus.ordered:
-        return 'Ordered';
-      case PurchaseStatus.received:
-        return 'Received';
-      case PurchaseStatus.cancelled:
-        return 'Cancelled';
-    }
-  }
-
-  PillTone _statusTone(PurchaseStatus status) {
-    switch (status) {
-      case PurchaseStatus.draft:
-        return PillTone.blue;
-      case PurchaseStatus.ordered:
-        return PillTone.amber;
-      case PurchaseStatus.received:
-        return PillTone.green;
-      case PurchaseStatus.cancelled:
-        return PillTone.neutral;
-    }
   }
 }
 

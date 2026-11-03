@@ -194,7 +194,7 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | `orders` | Ledger of all tickets, status flow, settlement, void/refund, KOT/receipt, CSV export | `OrderController` | `DummyOrderData` | `orders_screen.dart` + 7 widgets + KOT PDF builder |
 | `menu` | Browse/search/filter/sort dishes, table/grid catalog, add/edit dishes, availability, margins, modifier presets | `MenuController` | `DummyMenuItemData`, `DummyMenuModifierData` | `menu_screen.dart` + 13 widgets |
 | `inventory` | Stock levels, reorder levels, stock value | `InventoryController` | `DummyInventoryData` | `inventory_screen.dart` |
-| `purchases` | Purchase orders by supplier/status | `PurchaseController` | `DummyPurchaseData` | `purchases_screen.dart` |
+| `purchases` | Purchase ledger + vendor directory: raise POs, register suppliers, receive inbound against the dock scale, inspection drafts, CSV export | `PurchaseController` | `DummyPurchaseData`, `DummyVendorData` | `purchases_screen.dart` + 10 widgets/dialogs |
 | `customers` | Customer directory, phone-first add/attach | `CustomerController` | `DummyCustomerData` | `customers_screen.dart` + phone dialog |
 | `branches` | Branch directory and branch selector data | `BranchController` | `DummyBranchData` + hardcoded labels | `branches_screen.dart` |
 | `reports` | Sales metrics, top items, staff performance by range | `ReportController` | `DummyReportData` | `reports_screen.dart` |
@@ -296,11 +296,23 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | `inventory/controller/inventory_controller.dart` | Categories, search, items, `filteredItems`, low/out counts, total value. |
 | `inventory/model/inventory_item_model.dart` | `StockLevel`, `InventoryItem` + `fromJson`; value getters. |
 | `inventory/dummy_data/dummy_inventory_data.dart` | Categories + stock rows. |
-| `inventory/screens/inventory_screen.dart` | Header, 3 stat cards, category chips, stock table. Add Stock is a no-op. |
-| `purchases/controller/purchase_controller.dart` | Status filters, search, purchases, `filteredPurchases`, pending count, filtered total. |
-| `purchases/model/purchase_model.dart` | `PurchaseStatus`, `Purchase` + `fromJson`. |
-| `purchases/dummy_data/dummy_purchase_data.dart` | Status filter labels + PO rows. |
-| `purchases/screens/purchases_screen.dart` | Header, status chips, purchase table. New Purchase is a no-op. |
+| `inventory/screens/inventory_screen.dart` | Header, 3 stat cards, category chips, stock table. Add Stock opens the add-stock dialog. |
+| `purchases/controller/purchase_controller.dart` | Status filters, search, PO/vendor lists, `filteredPurchases`, `selectedPurchase`, derived stat-ribbon KPIs, `registerSupplier`, `createPurchase`, `saveInspectionDraft`, `receivePurchase`, `exportPurchases` (CSV to clipboard), PO/vendor id sequences. |
+| `purchases/model/purchase_model.dart` | `PurchaseStatus`, `PaymentStatus`, `PurchaseLine` (carries `unitPrice`, derives `total`) and `Purchase` (derives `amount` from lines, plus `balanceDue`, `isOpen`, `commodities`) + `fromJson`/`copyWith`. |
+| `purchases/model/vendor_model.dart` | Approved `Vendor` (tier/category/credit terms/outstanding/lifetime spend/rep/phone) + `fromJson`. |
+| `purchases/dummy_data/dummy_purchase_data.dart` | Status filter labels + PO rows with consistent unit prices. |
+| `purchases/dummy_data/dummy_vendor_data.dart` | Six approved supplier rows. |
+| `purchases/screens/purchases_screen.dart` | Header, stat ribbon, tab bar, ledger + dock or vendor directory; opens Register Supplier and New Purchase Order dialogs. |
+| `purchases/widgets/purchases_header_widget.dart` | Breadcrumb, title, search field, Register Supplier + New Purchase Order actions. |
+| `purchases/widgets/purchases_stat_ribbon_widget.dart` | Active suppliers, open POs, arriving-today and outstanding-payables metrics. |
+| `purchases/widgets/purchases_tab_bar_widget.dart` | Segmented Purchase Orders / Vendors selector. |
+| `purchases/widgets/purchases_table_widget.dart` | Ledger table (PO, supplier, commodities, status, ordered, amount) with sub-header, footer total and Export CSV. |
+| `purchases/widgets/purchase_badges.dart` | Status pill tones/colors and payment/commodity badges. |
+| `purchases/widgets/receive_inbound_panel_widget.dart` | Right dock that verifies inbound quantities against the scale, then commits the PO or keeps the readings as an inspection draft. |
+| `purchases/widgets/vendor_directory_widget.dart` | Supplier cards with per-vendor "Order PO" (pre-fills the builder) and Register Supplier. |
+| `purchases/widgets/purchases_dialog_shell.dart` | Shared dialog chrome (accent line, header, dividers, footer) plus field-label and input-decoration helpers. |
+| `purchases/widgets/register_supplier_dialog_widget.dart` | Supplier onboarding form; `showRegisterSupplierDialog(...)` resolves to the created vendor. |
+| `purchases/widgets/new_purchase_order_dialog_widget.dart` | PO builder with supplier/destination/schedule, payment plan + conditional advance, dynamic line items, live total and validation; `showNewPurchaseOrderDialog(...)` accepts an optional `initialVendor`. |
 | `customers/controller/customer_controller.dart` | Search, customers, phone normalization, `findByPhone`, `addCustomer`, `updateCustomer`, `filteredCustomers`, regular count, lifetime spend. |
 | `customers/model/customer_model.dart` | `Customer(id, name?, phone, visits, spent, lastVisit)` + `fromJson` + `displayName`/`isRegular`. |
 | `customers/dummy_data/dummy_customer_data.dart` | Customer rows. |
@@ -479,7 +491,7 @@ call, keep the `fromJson` mapping, and keep the `.obs` state identical.
 | Orders | `DummyOrderData.orders(now:)` | Times relative to fetch time so elapsed/rush labels look live. |
 | Menu | `DummyMenuItemData` | Same dishes as POS. |
 | Inventory | `DummyInventoryData` | |
-| Purchases | `DummyPurchaseData` | |
+| Purchases | `DummyPurchaseData` + `DummyVendorData` | New POs, suppliers and inspection drafts are in memory only. |
 | Customers | `DummyCustomerData` | New customers are added in memory only. |
 | Branches | `DummyBranchData` + hardcoded label list | |
 | Reports | `DummyReportData` | |
@@ -613,8 +625,12 @@ is "rush".
   import and the category manager remain no-ops.
 - **Inventory:** stat cards (low stock, out of stock, stock value), category filter,
   table with quantity/reorder/status/value. Add Stock is a no-op.
-- **Purchases:** status chips + search filter POs; table shows PO, supplier, item
-  summary, status, ordered at, amount. New Purchase is a no-op.
+- **Purchases:** status chips + search filter POs; the ledger shows PO, supplier,
+  commodities, status, ordered date and amount, and the right dock verifies inbound
+  quantities before receiving. Register Supplier and New Purchase Order open real
+  dialogs (Order PO pre-fills the vendor), Export CSV copies the visible ledger, and
+  Save Inspection Draft keeps the dock readings per PO. Amounts are derived from line
+  totals so the ledger, dock and KPIs always agree.
 - **Customers:** search by name/phone/id (digits-only phone matching); table shows
   visits/type/last visit/spend; Add Customer opens the shared phone dialog.
 - **Branches:** search by name/id/manager; table shows address/manager/phone/since/
@@ -726,10 +742,10 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 7. **Branch selection is cosmetic.** It changes the top bar/dashboard label and the
    branch code on order receipts, but it does not filter menu/inventory/orders by branch.
 8. **Reports range chips don't reload data.** `rangeOnChanged` only updates the index.
-9. **Several "Add/Export" buttons are no-ops:** Add Stock, New Purchase,
-   Add Branch, Add Staff, Menu bulk import/category manager, Reports Export, TopBar
-   invoice search. (Menu Add/Edit Dish and TopBar New Sale **are** wired; New Sale opens
-   the POS new-sale dialog.)
+9. **Several "Add/Export" buttons are no-ops:** Add Branch, Add Staff, Menu bulk
+   import/category manager, Reports Export, TopBar invoice search. (Inventory Add Stock,
+   Purchases Register Supplier / New Purchase Order / Order PO / Export CSV, and Menu
+   Add/Edit Dish **are** wired; TopBar New Sale opens the POS new-sale dialog.)
 10. **Manager PIN is hardcoded** to `1234` in `OrderController.managerPin` (demo).
 11. **Top bar has a known overflow history** in some widget tests; new tests should
     assert `tester.takeException()` is null or deliberately drain known exceptions.

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:omnix/core/responsive/app_breakpoints.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
+import 'package:omnix/features/pos/widgets/new_sale_dialog_widget.dart';
 
 class TopBarWidget extends StatelessWidget {
   const TopBarWidget({super.key, required this.branchController});
@@ -96,6 +97,7 @@ class TopBarWidget extends StatelessWidget {
                 if (showSync) _buildSyncBadge(),
 
                 _buildNewSaleButton(
+                  context,
                   width: newSaleWidth,
                   showLabel: showNewSaleLabel,
                 ),
@@ -313,7 +315,11 @@ class TopBarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildNewSaleButton({required double width, required bool showLabel}) {
+  Widget _buildNewSaleButton(
+    BuildContext context, {
+    required double width,
+    required bool showLabel,
+  }) {
     final Widget icon = DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.brown.withValues(alpha: 0.4),
@@ -326,7 +332,7 @@ class TopBarWidget extends StatelessWidget {
     );
 
     final Widget button = ElevatedButton(
-      onPressed: () {},
+      onPressed: () => openNewSaleDialog(context),
       style: ElevatedButton.styleFrom(
         fixedSize: Size(width, 38),
         backgroundColor: AppTheme.amber,

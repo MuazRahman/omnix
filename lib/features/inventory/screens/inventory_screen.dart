@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/core/utils/format.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
+import 'package:omnix/features/common/widgets/category_manager_dialog_widget.dart';
 import 'package:omnix/features/common/widgets/custom_container_widget.dart';
 import 'package:omnix/features/common/widgets/data_table_widget.dart';
 import 'package:omnix/features/common/widgets/section_header_widget.dart';
@@ -10,6 +11,7 @@ import 'package:omnix/features/common/widgets/status_pill_widget.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/inventory/controller/inventory_controller.dart';
 import 'package:omnix/features/inventory/model/inventory_item_model.dart';
+import 'package:omnix/features/inventory/widgets/inventory_add_stock_dialog_widget.dart';
 
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({super.key});
@@ -37,7 +39,7 @@ class InventoryScreen extends StatelessWidget {
               onSearchChanged: inventoryController.searchOnChanged,
               actionLabel: 'Add Stock',
               actionIcon: Icons.add,
-              onAction: () {},
+              onAction: () => _openAddStockDialog(context, inventoryController),
             ),
           ),
 
@@ -85,15 +87,32 @@ class InventoryScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 spacing: 8,
-                children: List.generate(
-                  inventoryController.categories.length,
-                  (int index) => InventoryCategoryChip(
-                    label: inventoryController.categories[index],
-                    isSelected:
-                        inventoryController.selectedCategory.value == index,
-                    onTap: () => inventoryController.categoryOnChanged(index),
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        spacing: 8,
+                        children: List.generate(
+                          inventoryController.categories.length,
+                          (int index) => InventoryCategoryChip(
+                            label: inventoryController.categories[index],
+                            isSelected:
+                                inventoryController.selectedCategory.value ==
+                                index,
+                            onTap: () =>
+                                inventoryController.categoryOnChanged(index),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  _ManageCategoriesButton(
+                    key: const Key('inventory-manage-categories'),
+                    onTap: () =>
+                        _openCategoryManager(context, inventoryController),
+                  ),
+                ],
               ),
             ),
           ),
@@ -153,6 +172,45 @@ class InventoryScreen extends StatelessWidget {
     );
   }
 
+  // Opens the Add Stock dialog and confirms the save once the controller
+  // has re-fetched the list behind it.
+  Future<void> _openAddStockDialog(
+    BuildContext context,
+    InventoryController inventoryController,
+  ) async {
+    final bool? created = await showAddStockDialog(
+      context,
+      inventoryController,
+    );
+
+    if (created != true || !context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Stock item added to the inventory.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // Opens the category manager so stock categories can be added, renamed or
+  // removed straight from the screen.
+  Future<void> _openCategoryManager(
+    BuildContext context,
+    InventoryController inventoryController,
+  ) {
+    return showCategoryManagerDialog(
+      context: context,
+      title: 'Inventory Categories',
+      subtitle: 'Add, rename or remove the categories used to file stock.',
+      categories: inventoryController.categories,
+      usageCount: inventoryController.categoryUsageCount,
+      onCreate: inventoryController.addCategory,
+      onRename: inventoryController.renameCategory,
+      onDelete: inventoryController.removeCategory,
+    );
+  }
+
   List<Widget> buildCells(InventoryItem item) {
     return [
       DataTableWidget.text(
@@ -162,12 +220,12 @@ class InventoryScreen extends StatelessWidget {
       ),
       DataTableWidget.text(item.category, weight: FontWeight.w500),
       DataTableWidget.text(
-        '${item.quantity} ${item.unit}',
+        '${formatQuantity(item.quantity)} ${item.unit}',
         weight: FontWeight.w600,
         monospace: true,
       ),
       DataTableWidget.text(
-        '${item.reorderLevel} ${item.unit}',
+        '${formatQuantity(item.reorderLevel)} ${item.unit}',
         color: AppTheme.tableHeaderText,
         monospace: true,
       ),
@@ -257,6 +315,53 @@ class InventoryStatCard extends StatelessWidget {
 
             Icon(icon, color: iconColor, size: 24),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// Chip-styled button that opens the category manager from the filter row
+class _ManageCategoriesButton extends StatelessWidget {
+  const _ManageCategoriesButton({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        hoverColor: AppTheme.amber.withValues(alpha: 0.1),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: AppTheme.amber.withValues(alpha: 0.5),
+              width: 0.8,
+            ),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 6,
+            children: [
+              Icon(Icons.tune, size: 14, color: AppTheme.amber),
+              Text(
+                'Manage',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.amber,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -7,6 +7,12 @@ String formatNumber(num value) {
 // 84650 -> 84,650 TK
 String formatTaka(num value) => '${formatNumber(value)} TK';
 
+// 42.0 -> "42", 12.5 -> "12.5" (drops the trailing ".0" of whole numbers)
+String formatQuantity(num value) {
+  if (value == value.roundToDouble()) return value.round().toString();
+  return value.toString();
+}
+
 // 84650 -> ৳ 84,650
 String formatTakaSymbol(num value) => '৳ ${formatNumber(value)}';
 

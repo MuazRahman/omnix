@@ -4,9 +4,8 @@
 > instead of re-reading every file. Use it to locate the right feature, understand the
 > runtime/data flow, and follow the existing patterns when changing code.
 >
-> **Last verified:** 2026-10-26 · branch `master` · commit `8776000`
-> ("Integrate receipt printing, update POS menu item cards with dish images, and refine
-> receipt QR links") · Flutter 3.47.2 stable · Dart 3.13.2.
+> **Last verified:** 2026-11-03 · branch `master` · commit `1d4193f` plus uncommitted
+> work on the POS new-sale dialog · Flutter 3.47.2 stable · Dart 3.13.2.
 
 ---
 
@@ -170,7 +169,7 @@ flutter build web --dart-define=RECEIPT_BASE_URL=https://pos.example.com
 | `section_header_widget.dart` | Section title/subtitle + optional 280px search field + optional amber action button. Used by all list screens. |
 | `see_all_button.dart` | Hover-underlined "See All" link used by dashboard cards. |
 | `status_pill_widget.dart` | `StatusPillWidget` with `PillTone { amber, green, neutral, red, blue }`; optional leading dot. |
-| `top_bar_widget.dart` | Global 74px top bar: branch dropdown, invoice search, sync badge, "New Sale" button, user info/avatar. Responsive width budgeting; many controls hide as width shrinks. Requires a `BranchController`. |
+| `top_bar_widget.dart` | Global 74px top bar: branch dropdown, invoice search, sync badge, "New Sale" button, user info/avatar. Responsive width budgeting; many controls hide as width shrinks. Requires a `BranchController`. "New Sale" calls `openNewSaleDialog(context)` and switches the shell to POS after submission; invoice search is still a no-op. |
 
 ### 4.4 `lib/features/main_layout_shell`
 
@@ -191,9 +190,9 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | Feature | Purpose | Controller | Data source | Screens / key widgets |
 | --- | --- | --- | --- | --- |
 | `dashboard` | Shift overview: stats, sales chart, recent orders, branch performance | `DashBoardController` | 4 dummy files | `dashboard_screen.dart` + 5 widgets |
-| `pos` | Sell menu items, build cart, attach customer, take payment, print receipt | `PosController` | `DummyMenuItemData`, `DummyPosData` | `pos_screen.dart` + 16 widgets |
+| `pos` | Start a ticket from the new-sale dialog, sell menu items, build cart, attach customer, take payment, print receipt | `PosController` | `DummyMenuItemData`, `DummyPosData` | `pos_screen.dart` + 16 widgets |
 | `orders` | Ledger of all tickets, status flow, settlement, void/refund, KOT/receipt, CSV export | `OrderController` | `DummyOrderData` | `orders_screen.dart` + 7 widgets + KOT PDF builder |
-| `menu` | Browse/search/filter/sort dishes, table/grid catalog, availability, margins, modifier presets | `MenuController` | `DummyMenuItemData`, `DummyMenuModifierData` | `menu_screen.dart` + 12 widgets |
+| `menu` | Browse/search/filter/sort dishes, table/grid catalog, add/edit dishes, availability, margins, modifier presets | `MenuController` | `DummyMenuItemData`, `DummyMenuModifierData` | `menu_screen.dart` + 13 widgets |
 | `inventory` | Stock levels, reorder levels, stock value | `InventoryController` | `DummyInventoryData` | `inventory_screen.dart` |
 | `purchases` | Purchase orders by supplier/status | `PurchaseController` | `DummyPurchaseData` | `purchases_screen.dart` |
 | `customers` | Customer directory, phone-first add/attach | `CustomerController` | `DummyCustomerData` | `customers_screen.dart` + phone dialog |
@@ -230,13 +229,14 @@ places (`MainLayoutShellController` and the sidebar widgets).
 
 | File | Purpose |
 | --- | --- |
-| `controller/pos_controller.dart` | Cart, menu, category/search, order type, table/pax, customer, tender, cash, invoice number; totals, tax, wallet cashout, discount/change, quick cash; add/remove cart; `prepareCheckout`, `startNewSale`. |
-| `dummy_data/dummy_pos_data.dart` | Preloaded cart, tables, pax options, invoice `1042`, branch/receipt identity, tax 5%, wallet cashout 1.5%. |
+| `controller/pos_controller.dart` | Cart, menu, category/search, order type, table/pax, assigned `serverName`, customer, tender, cash, invoice number; totals, tax, wallet cashout, discount/change, quick cash; add/remove cart; `prepareCheckout`, `startNewSale`. `startNewSale` clears cart/search/category/cash/tender/customer and increments the invoice; the new-sale dialog applies the fresh order type/table/pax/server/customer afterwards. |
+| `dummy_data/dummy_pos_data.dart` | Preloaded cart, invoice `1042`, branch/receipt identity, tax 5%, wallet cashout 1.5%. Also the static floor plan: `PosFloor` (Indoor / Rooftop / Family), `PosFloorTable` + `PosTableStatus` (free / occupied / reserved), `floorTables`, the `tables` label getter, `defaultTable`, `defaultServer` and pax options. Table statuses are cosmetic demo data. |
 | `model/cart_item_model.dart` | `CartItem(menuItemId, name, price, quantity, note)` + `lineTotal` + `copyWith`. |
 | `model/pos_customer_model.dart` | `PosCustomer(name?, phone, id?)`, `displayName` → `N/A` when blank, value equality. |
 | `model/pos_order_type_model.dart` | `PosOrderType { dineIn, takeaway, delivery }` with labels. |
 | `model/pos_tender_mode_model.dart` | `PosTenderMode { cash, mobileWallet, card }` with labels. |
-| `screens/pos_screen.dart` | Keyboard shortcuts (`Alt+S`, `F2`, `Enter`, `Esc`), catalog left / cart right, width-based cart width (340/400), opens receipt dialog after customer check. |
+| `screens/pos_screen.dart` | Keyboard shortcuts (`Alt+S` search, `F2` new-sale dialog, `Enter` charge, `Esc` close/dismiss), catalog left / cart right, width-based cart width (340/400), opens receipt dialog after customer check. An `ever` worker mirrors `searchText` back into the local text field so `startNewSale()` clears the UI. |
+| `widgets/new_sale_dialog_widget.dart` | `openNewSaleDialog(context)` + `NewSaleDialogWidget`: "Start New Order Ticket" modal collecting order mode, floor/table, pax, assigned server and optional customer; then calls `startNewSale()`, applies the draft and navigates the shell to POS. Table grid is grouped by `PosFloor`; only free tables are selectable, pax is clamped to the table's seats, and server options come from active waiters/managers in `StaffController` plus `DummyPosData.defaultServer`. Customer lookup uses `CustomerController` (phone ≥6 digits or exact name); "New VIP Member" reuses `CustomerPhoneDialogWidget`. Keys: `new-sale-close-button`, `new-sale-customer-field`, `new-sale-new-customer-button`, `new-sale-matched-customer`, `new-sale-server-dropdown`, `new-sale-cancel-button`, `new-sale-start-button`. |
 | `widgets/pos_cart_line_widget.dart` | One cart line + stepper + line total. |
 | `widgets/pos_cart_panel_widget.dart` | Ticket header, customer bar, scrollable lines, totals, payment panel. |
 | `widgets/pos_category_bar_widget.dart` | Horizontal category chips. |
@@ -251,7 +251,7 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | `widgets/pos_quantity_stepper_widget.dart` | Minus/plus control. |
 | `widgets/pos_receipt_dialog_widget.dart` | Builds `ReceiptDocument`, shows `ReceiptPaperWidget` + QR, print, printer settings, auto-print, "New Sale". |
 | `widgets/pos_search_bar_widget.dart` | Dish search + scan action. |
-| `widgets/pos_ticket_header_widget.dart` | Ticket number, context, quick actions. |
+| `widgets/pos_ticket_header_widget.dart` | Ticket number, order context (table + assigned floor server), quick actions. |
 
 #### Orders
 
@@ -274,12 +274,12 @@ places (`MainLayoutShellController` and the sidebar widgets).
 
 | File | Purpose |
 | --- | --- |
-| `menu/controller/menu_controller.dart` | Categories, search, branch, sort, table/grid view, paging; `filteredItems`, `pagedItems`, catalog stats; availability toggle, duplicate, archive. |
+| `menu/controller/menu_controller.dart` | Categories, search, branch, sort, table/grid view, paging; `filteredItems`, `pagedItems`, catalog stats; `addMenuItem`, `updateMenuItem`, availability toggle, duplicate, archive. |
 | `menu/model/menu_item_model.dart` | `MenuItem` with id/name/Bangla alias/category/price/recipe cost/availability/branch/image/prep time/bestseller/low-stock/modifiers/sales + margin getters, `copyWith`, `fromJson`. |
 | `menu/model/menu_modifier_group_model.dart` | `MenuModifierGroup` and `MenuModifierOption` presets. |
 | `menu/dummy_data/dummy_menu_item_data.dart` | Categories + 15 dishes with asset images, Bangla aliases, costs and modifier metadata, branch `DHK-01`. |
 | `menu/dummy_data/dummy_menu_modifier_data.dart` | Spice level, portion and add-on modifier presets. |
-| `menu/screens/menu_screen.dart` | Header, health ribbon, filter bar, table/grid catalog, insight cards, pagination and end-drawer modifier presets. Add/edit/import/category manager remain no-ops. |
+| `menu/screens/menu_screen.dart` | Header, health ribbon, filter bar, table/grid catalog, insight cards, pagination and end-drawer modifier presets. Add-dish and edit-dish dialogs are wired; bulk import and category manager remain no-ops. |
 | `menu/widgets/menu_item_image_widget.dart` | Asset-or-network image; no placeholder icon (missing file = dark tile). |
 | `menu/widgets/menu_header_widget.dart` | Breadcrumb, title, modifier/bulk-import/add-dish actions. |
 | `menu/widgets/menu_stat_ribbon_widget.dart` | Active dishes, food-cost margin, kitchen availability and top segment metrics. |
@@ -289,6 +289,10 @@ places (`MainLayoutShellController` and the sidebar widgets).
 | `menu/widgets/menu_pagination_footer_widget.dart` | Page range, previous/next and page indicator. |
 | `menu/widgets/menu_insight_cards_widget.dart` | Branch pricing, margin watch and modifier preset cards. |
 | `menu/widgets/menu_modifier_drawer_widget.dart` | End drawer for modifier presets. |
+| `menu/widgets/menu_add_dish_dialog_widget.dart` | Shared dish form dialog. `showMenuAddDishDialog(...)` adds a new dish; `showMenuEditDishDialog(context, controller, item)` prefills the same form from an existing row and saves via `updateMenuItem`. Switches title/submit label between "Add Menu Item"/"Add Dish" and "Edit Menu Item"/"Save Changes". Keys: `menu-add-dish-dialog`, `menu-dish-name-field`, `menu-dish-bangla-field`, `menu-dish-category-field`, `menu-dish-station-field`, `menu-dish-price-field`, `menu-dish-cost-field`, `menu-dish-availability-switch`, `menu-dish-submit-button`, `menu-dish-image-picker`. |
+| `menu/widgets/menu_dish_actions_menu_widget.dart` | Compact per-dish overflow menu (edit / duplicate or restock / archive) used by the table and grid. |
+| `menu/widgets/menu_availability_toggle_widget.dart` | Compact kitchen on/off switch for a single dish; hand-drawn track/knob to fit a table cell. |
+| `menu/widgets/menu_category_chip_widget.dart` | One category filter chip in the menu toolbar. |
 | `inventory/controller/inventory_controller.dart` | Categories, search, items, `filteredItems`, low/out counts, total value. |
 | `inventory/model/inventory_item_model.dart` | `StockLevel`, `InventoryItem` + `fromJson`; value getters. |
 | `inventory/dummy_data/dummy_inventory_data.dart` | Categories + stock rows. |
@@ -382,6 +386,10 @@ cross-feature dependencies (e.g. dashboard → shell controller, POS dialog → 
   `Get.isRegistered` / `Get.find`, so it degrades gracefully in tests.
 - `PosReceiptDialogWidget` guards `Get.isRegistered<PrinterSettingsController>()` and
   `Get.isRegistered<ReceiptPrinter>()` before using them.
+- `NewSaleDialogWidget` / `openNewSaleDialog` read `PosController` directly (required),
+  and guard `CustomerController`, `StaffController` and `MainLayoutShellController` with
+  `Get.isRegistered` so the dialog works in isolation. `openNewSaleDialog` switches the
+  shell to `MainLayoutShellController.posIndex` when that controller exists.
 - Do not put UI logic in controllers beyond snackbars (`OrderController._notify` is the
   one exception).
 
@@ -467,7 +475,7 @@ call, keep the `fromJson` mapping, and keep the `.obs` state identical.
 | Feature | Dummy source | Notes |
 | --- | --- | --- |
 | Dashboard | `DummySalesData`, `DummyTodayStatsData`, `DummyOrderTableData`, `DummyBranchPerformanceData` | Recent orders limited to 5; branches sorted by sale and limited to 3. |
-| POS | `DummyMenuItemData` + `DummyPosData` | Cart preloaded with 3 lines; invoice starts at 1042. |
+| POS | `DummyMenuItemData` + `DummyPosData` | Cart preloaded with 3 lines; invoice starts at 1042. Floor plan, table statuses and the default server are demo constants. |
 | Orders | `DummyOrderData.orders(now:)` | Times relative to fetch time so elapsed/rush labels look live. |
 | Menu | `DummyMenuItemData` | Same dishes as POS. |
 | Inventory | `DummyInventoryData` | |
@@ -483,10 +491,16 @@ call, keep the `fromJson` mapping, and keep the `.obs` state identical.
 
 ### 8.1 POS sale → receipt (the most important flow)
 
-1. **Open POS** — `PosScreen` (index 1). It reads `PosController` and
-   `BranchController` with `Get.find`.
-2. **Pick order type** — `PosOperationalBarWidget` sets `PosOrderType`. Table and pax
-   chips are shown only for dine-in (`isDineIn`).
+1. **Start a ticket** — the global "New Sale" button in the top bar, or `F2` on the POS
+   screen, calls `openNewSaleDialog` → `NewSaleDialogWidget`. On submit it calls
+   `PosController.startNewSale()`, applies the draft and switches the shell to POS
+   (index 1). The modal collects order mode, dine-in floor/table (free tables only),
+   pax (clamped to the table's seats), assigned floor server and an optional
+   existing/new customer. `PosScreen` reads `PosController` and `BranchController` with
+   `Get.find`.
+2. **Adjust on screen** — `PosOperationalBarWidget` can still change order type, table
+   and pax after the ticket opens; table and pax chips are shown only for dine-in
+   (`isDineIn`).
 3. **Find dishes** — search text/category update `filteredItems`; the grid renders
    `PosMenuItemCardWidget`. Tapping a card calls `addToCart`; the card shows quantity
    already in the cart. Disabled dishes (`isAvailable == false`) cannot be added.
@@ -513,7 +527,9 @@ call, keep the `fromJson` mapping, and keep the `.obs` state identical.
     `SpoolReceiptPrinter` → `ReceiptPdfBuilder.build` → `Printing.directPrintPdf`
     to the selected Windows queue at `roll80`.
 11. **Finish** — successful print (or "New Sale") calls `startNewSale()`: clears cart,
-    search, category, cash, tender, customer, and increments `invoiceNumber`.
+    search, category, cash, tender, customer, and increments `invoiceNumber`. Starting
+    the next ticket from the top bar / `F2` reopens the new-sale dialog, which resets
+    and re-applies order mode, table, pax, server and customer.
 
 > **Known gap:** the POS sale is a separate demo flow. It does **not** append an `Order`
 > to `OrderController`, so the Orders ledger is not updated by a POS sale yet.
@@ -588,8 +604,13 @@ is "rush".
 
 - **Menu:** category chips + search/sort/branch filters drive a responsive table or
   card grid with paging, availability toggles, duplicate/archive actions and margin
-  metrics; modifier presets open in an end drawer. Add/edit/bulk import/category
-  manager are no-ops.
+  metrics; modifier presets open in an end drawer. Add Dish (header action) and Edit
+  Dish (row action in the table/grid, also the overflow menu) both open the shared
+  `menu_add_dish_dialog_widget.dart` form: add calls `MenuController.addMenuItem` and
+  edit prefills the row and calls `MenuController.updateMenuItem`, preserving fields the
+  form does not expose (branch, image URL, bestseller flag, sales/modifier data). A locally
+  picked `imageBytes` overrides `imageUrl`; clearing it falls back to the asset. Bulk
+  import and the category manager remain no-ops.
 - **Inventory:** stat cards (low stock, out of stock, stock value), category filter,
   table with quantity/reorder/status/value. Add Stock is a no-op.
 - **Purchases:** status chips + search filter POs; table shows PO, supplier, item
@@ -629,6 +650,9 @@ is "rush".
 - `PosScreen` uses 340px cart under 1000px content width, otherwise 400px.
 - POS operational bar wraps under 780px; order summary switches to a horizontal strip
   under 760px; report metric grid uses `maxCrossAxisExtent: 260`.
+- The new-sale dialog is capped at 920px wide (and viewport height − 48). Inside it,
+  order-mode cards stack under 640px, floor sections and the pax/server pair stack under
+  600/560px, the floor bar stacks under 620px, and the footer stacks under 700px.
 - Tables use flex columns and fixed row heights; long text is ellipsized, not wrapped.
 
 ### 9.3 Shared widget rules
@@ -656,9 +680,10 @@ is "rush".
 | `recent_order_table_test.dart` | Table headers, rows, status badges, monospaced ৳ amount. |
 | `top_bar_test.dart` | Top bar fits widths 1920 → 500 with no exception. |
 | `pos_screen_test.dart` | Large suite: layout sizes, dine-in vs takeaway/delivery, customer attach flow, new customer without name (`N/A`), cash change/discount, wallet cashout, cart quantity, receipt preview/QR. |
+| `new_sale_dialog_test.dart` | New-sale modal: step headers, takeaway hides the floor plan, free-table selection clamps pax, existing-customer match, submit applies mode/table/pax/server/customer and increments the invoice; 640×720 compact layout. |
 | `customers_screen_test.dart` | Add Customer phone-first flow, duplicate phone handling, table refresh. |
 | `menu_item_image_test.dart` | Every dummy dish has branch id + bundled asset that loads (>1000 bytes). |
-| `menu_screen_test.dart` | Catalog + health ribbon render, category/search filters, table/grid toggle, 700px and 500px layouts. |
+| `menu_screen_test.dart` | Catalog + health ribbon render, category/search filters, table/grid toggle, edit-dish dialog prefill/save, 700px and 500px layouts. |
 | `receipt_page_test.dart` | `ReceiptDocument` round-trip, legacy `?d=` parsing, hash/path receipt URLs, public page rendering, phone width, discount/change, invoice-only lookup. |
 | `receipt_pdf_test.dart` | PDF starts with `%PDF-`, copies add pages, no-QR build, printer test slip. |
 
@@ -672,6 +697,9 @@ Test conventions:
 - Some tests intentionally drain pre-existing top-bar layout exceptions with
   `while (tester.takeException() != null) {}`; `pos_screen_test.dart` instead asserts
   no exceptions at all.
+- Controller actions that notify via `Get.snackbar` (e.g. `MenuController.updateMenuItem`)
+  leave a 3s timer behind. Call `Get.closeAllSnackbars()` + `await tester.pumpAndSettle()`
+  before the test ends, or the run fails with "A Timer is still pending".
 - Receipt PDF tests are pure Dart/Flutter and do not touch a real printer.
 
 Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
@@ -698,8 +726,10 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 7. **Branch selection is cosmetic.** It changes the top bar/dashboard label and the
    branch code on order receipts, but it does not filter menu/inventory/orders by branch.
 8. **Reports range chips don't reload data.** `rangeOnChanged` only updates the index.
-9. **Several "Add/Export" buttons are no-ops:** Add Item, Add Stock, New Purchase,
-   Add Branch, Add Staff, Reports Export, TopBar New Sale/search.
+9. **Several "Add/Export" buttons are no-ops:** Add Stock, New Purchase,
+   Add Branch, Add Staff, Menu bulk import/category manager, Reports Export, TopBar
+   invoice search. (Menu Add/Edit Dish and TopBar New Sale **are** wired; New Sale opens
+   the POS new-sale dialog.)
 10. **Manager PIN is hardcoded** to `1234` in `OrderController.managerPin` (demo).
 11. **Top bar has a known overflow history** in some widget tests; new tests should
     assert `tester.takeException()` is null or deliberately drain known exceptions.
@@ -711,6 +741,12 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
     switching tabs does not refetch. Use explicit refresh actions.
 15. **No auth / roles.** Sidebar user, cashier name, branch labels and staff data are
     hardcoded/dummy.
+16. **The new-sale floor plan is static.** Table statuses (`free` / `occupied` /
+    `reserved`) and server names come from `DummyPosData` + `DummyStaffData`; opening or
+    closing a ticket never changes them, and the selected table only becomes a label on
+    the POS ticket. The modal seeds itself from the current POS ticket when that table is
+    free (otherwise the first free indoor table), but it does not reserve or release
+    anything.
 
 ---
 
@@ -729,10 +765,13 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 
 ### Add a POS rule (discount, tender, validation)
 - State and calculations: `features/pos/controller/pos_controller.dart`.
+- Ticket setup (mode/table/pax/server/customer before selling):
+  `features/pos/widgets/new_sale_dialog_widget.dart` + `dummy_data/dummy_pos_data.dart`.
 - UI/field/button state: `features/pos/widgets/pos_payment_panel_widget.dart`.
 - Receipt effect: `pos_receipt_dialog_widget.dart` → `ReceiptDocument` →
   `receipt_paper_widget.dart` / `receipt_pdf_builder.dart`.
-- Tests: `test/pos_screen_test.dart` and `test/receipt_page_test.dart`.
+- Tests: `test/pos_screen_test.dart`, `test/new_sale_dialog_test.dart` and
+  `test/receipt_page_test.dart`.
 
 ### Add an Orders action/status
 1. `features/orders/model/order_model.dart`: enum/status or `copyWith` field.
@@ -749,6 +788,18 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 3. Add screen to `MainLayoutShellController.screens` + index constant + sidebar item.
 4. Build the page as `Scaffold > Column > TopBarWidget, SectionHeaderWidget, table`.
 5. Add tests for empty/filtered/table rendering.
+
+### Add a Menu dish field or action
+1. `features/menu/model/menu_item_model.dart`: add the field + constructor/`copyWith`/
+   `fromJson`.
+2. `features/menu/controller/menu_controller.dart`: populate it in `addMenuItem` and
+   `updateMenuItem` (keep both in sync so add and edit stay consistent).
+3. `features/menu/widgets/menu_add_dish_dialog_widget.dart`: add the input, prefill it in
+   `initState` for edit mode, and pass it in `_submit`.
+4. Render it in the table (`menu_table_widget.dart`) and/or grid
+   (`menu_grid_view_widget.dart`).
+5. Tests: extend `test/menu_screen_test.dart` (the edit-flow test exercises
+   prefill → change → save).
 
 ### Connect a backend endpoint
 - Replace the body of the feature's `fetchX()`; keep `isLoading`, `assignAll`, and
@@ -777,6 +828,7 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 | Colors | `core/theme/app_theme.dart` |
 | Money/date formatting | `core/utils/format.dart` |
 | POS totals/tax/discount | `features/pos/controller/pos_controller.dart` |
+| New sale / floor plan / assigned server | `features/pos/widgets/new_sale_dialog_widget.dart`, `features/pos/dummy_data/dummy_pos_data.dart` |
 | POS payment UI | `features/pos/widgets/pos_payment_panel_widget.dart` |
 | Receipt preview | `features/receipt/widgets/receipt_paper_widget.dart` |
 | Receipt PDF / 80mm | `features/receipt/printer/receipt_pdf_builder.dart` |
@@ -786,6 +838,8 @@ Commands: `flutter test`, `flutter test test/pos_screen_test.dart`,
 | Order lifecycle/settlement/void | `features/orders/controller/order_controller.dart` |
 | Order detail actions | `features/orders/widgets/order_detail_panel_widget.dart` |
 | KOT PDF | `features/orders/printer/kitchen_ticket_pdf_builder.dart` |
+| Menu dish add/edit form | `features/menu/widgets/menu_add_dish_dialog_widget.dart` |
+| Menu catalog state/actions | `features/menu/controller/menu_controller.dart` |
 | Customer phone dialog | `features/customers/widgets/customer_phone_dialog_widget.dart` |
 | Table UI | `features/common/widgets/data_table_widget.dart` |
 | Responsive thresholds | `core/responsive/app_breakpoints.dart` |

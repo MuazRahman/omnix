@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
 import 'package:omnix/features/menu/controller/menu_controller.dart';
+import 'package:omnix/features/menu/model/menu_item_model.dart';
 import 'package:omnix/features/menu/screens/menu_screen.dart';
 import 'package:omnix/features/menu/widgets/menu_grid_view_widget.dart';
 import 'package:omnix/features/menu/widgets/menu_table_widget.dart';
@@ -111,6 +112,107 @@ void main() {
     // Drop the confirmation snackbar so its timer does not outlive the test.
     Get.closeAllSnackbars();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('MANAGE CATEGORIES adds and deletes catalog categories', (
+    WidgetTester tester,
+  ) async {
+    await pumpMenu(tester, const Size(1920, 1080));
+
+    final MenuController menuController = Get.find<MenuController>();
+
+    await tester.tap(find.text('MANAGE CATEGORIES'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('category-manager-dialog')), findsOneWidget);
+    expect(
+      find.byKey(const Key('category-manager-row-Starters')),
+      findsOneWidget,
+    );
+
+    // Add a new category.
+    await tester.enterText(
+      find.byKey(const Key('category-manager-add-field')),
+      'Sizzlers',
+    );
+    await tester.tap(find.byKey(const Key('category-manager-add-button')));
+    await tester.pumpAndSettle();
+
+    expect(menuController.categories, contains('Sizzlers'));
+    expect(
+      find.byKey(const Key('category-manager-row-Sizzlers')),
+      findsOneWidget,
+    );
+
+    // Delete Dessert and confirm; its dishes move to the first category left.
+    await tester.tap(find.byKey(const Key('category-manager-delete-Dessert')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const Key('category-manager-confirm-delete-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(menuController.categories, isNot(contains('Dessert')));
+    expect(
+      menuController.menuItems
+          .where((MenuItem item) => item.category == 'Starters')
+          .length,
+      5,
+    );
+
+    await tester.tap(find.byKey(const Key('category-manager-done')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('category-manager-dialog')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Add Dish inline manager adds a category and files the dish', (
+    WidgetTester tester,
+  ) async {
+    await pumpMenu(tester, const Size(1920, 1080));
+
+    final MenuController menuController = Get.find<MenuController>();
+
+    await tester.tap(find.text('Add New Dish'));
+    await tester.pumpAndSettle();
+
+    // Add "Sizzlers" from inside the Add Dish dialog.
+    await tester.tap(find.byKey(const Key('menu-dish-manage-categories')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('category-manager-add-field')),
+      'Sizzlers',
+    );
+    await tester.tap(find.byKey(const Key('category-manager-add-button')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('category-manager-done')));
+    await tester.pumpAndSettle();
+
+    // The new category is now the selected value of the dropdown.
+    expect(find.text('Sizzlers'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('menu-dish-name-field')),
+      'Sizzling Beef',
+    );
+    await tester.enterText(
+      find.byKey(const Key('menu-dish-price-field')),
+      '540',
+    );
+
+    await tester.tap(find.byKey(const Key('menu-dish-submit-button')));
+    await tester.pumpAndSettle();
+
+    expect(menuController.menuItems.first.name, 'Sizzling Beef');
+    expect(menuController.menuItems.first.category, 'Sizzlers');
+
+    Get.closeAllSnackbars();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   for (final Size size in const [Size(700, 1000), Size(500, 900)]) {

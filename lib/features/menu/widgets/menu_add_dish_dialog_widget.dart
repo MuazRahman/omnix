@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart' hide MenuController;
 import 'package:flutter/services.dart';
 import 'package:omnix/core/theme/app_theme.dart';
+import 'package:omnix/features/common/widgets/category_manager_dialog_widget.dart';
 import 'package:omnix/features/menu/controller/menu_controller.dart';
 import 'package:omnix/features/menu/model/menu_item_model.dart';
 
@@ -55,6 +56,8 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
   static const int _maxImageBytes = 5 * 1024 * 1024;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormFieldState<String>> _categoryFieldKey =
+      GlobalKey<FormFieldState<String>>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _banglaController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -75,15 +78,13 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
 
     final MenuItem? item = widget.item;
 
-    final List<String> selectableCategories = widget.controller.categories
-        .where((String category) => category != 'All')
-        .toList();
+    final List<String> selectableCategories =
+        widget.controller.selectableCategories;
     _category = item != null && selectableCategories.contains(item.category)
         ? item.category
-        : selectableCategories.firstWhere(
-            (String category) => category != 'All',
-            orElse: () => 'General',
-          );
+        : selectableCategories.isNotEmpty
+        ? selectableCategories.first
+        : 'General';
 
     final String? station = item?.kitchenStation;
     _kitchenStation =
@@ -473,32 +474,55 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
       crossAxisAlignment: .stretch,
       spacing: 6,
       children: [
-        const _FieldLabel(label: 'Category'),
-        DropdownButtonFormField<String>(
+        Row(
+          children: [
+            const Expanded(child: _FieldLabel(label: 'Category')),
+            TextButton.icon(
+              key: const Key('menu-dish-manage-categories'),
+              onPressed: _manageCategories,
+              icon: const Icon(Icons.tune, size: 14),
+              label: const Text('Manage'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.amber,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+        KeyedSubtree(
           key: const Key('menu-dish-category-field'),
-          initialValue: _category,
-          isExpanded: true,
-          dropdownColor: AppTheme.sidebarBackgroundBlack,
-          borderRadius: BorderRadius.circular(8),
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            size: 18,
-            color: AppTheme.tableHeaderText,
+          child: DropdownButtonFormField<String>(
+            key: _categoryFieldKey,
+            initialValue: _category,
+            isExpanded: true,
+            dropdownColor: AppTheme.sidebarBackgroundBlack,
+            borderRadius: BorderRadius.circular(8),
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: AppTheme.tableHeaderText,
+            ),
+            style: _inputTextStyle,
+            decoration: _inputDecoration(),
+            items: widget.controller.selectableCategories.map((
+              String category,
+            ) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(category),
+              );
+            }).toList(),
+            onChanged: (String? value) {
+              if (value != null) setState(() => _category = value);
+            },
           ),
-          style: _inputTextStyle,
-          decoration: _inputDecoration(),
-          items: widget.controller.categories
-              .where((String category) => category != 'All')
-              .map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              })
-              .toList(),
-          onChanged: (String? value) {
-            if (value != null) setState(() => _category = value);
-          },
         ),
       ],
     );
@@ -783,6 +807,40 @@ class _MenuAddDishDialogState extends State<MenuAddDishDialog> {
     } finally {
       if (mounted) setState(() => _isPickingImage = false);
     }
+  }
+
+  // Opens the shared category manager and keeps the dropdown on a valid
+  // category afterwards (selecting anything created from it).
+  Future<void> _manageCategories() async {
+    FocusScope.of(context).unfocus();
+
+    String? created;
+    await showCategoryManagerDialog(
+      context: context,
+      title: 'Menu Categories',
+      subtitle: 'Add, rename or remove the categories of the catalog.',
+      categories: widget.controller.categories,
+      usageCount: widget.controller.countForCategory,
+      onCreate: widget.controller.addCategory,
+      onRename: widget.controller.renameCategory,
+      onDelete: widget.controller.removeCategory,
+      onCreated: (String name) => created = name,
+    );
+
+    if (!mounted) return;
+
+    final String? createdName = created;
+    final List<String> selectable = widget.controller.selectableCategories;
+    final String target = createdName != null && selectable.contains(createdName)
+        ? createdName
+        : selectable.contains(_category)
+        ? _category
+        : selectable.isNotEmpty
+        ? selectable.first
+        : 'General';
+
+    setState(() => _category = target);
+    _categoryFieldKey.currentState?.didChange(target);
   }
 
   void _submit() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide MenuController;
 import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
+import 'package:omnix/features/common/widgets/category_manager_dialog_widget.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 import 'package:omnix/features/menu/controller/menu_controller.dart';
 import 'package:omnix/features/menu/model/menu_item_model.dart';
@@ -64,8 +65,7 @@ class _MenuScreenState extends State<MenuScreen> {
               child: MenuFilterBarWidget(
                 controller: menuController,
                 branchController: branchController,
-                onManageCategories: () =>
-                    menuController.showComingSoon('Category manager'),
+                onManageCategories: _openCategoryManager,
               ),
             ),
 
@@ -119,5 +119,22 @@ class _MenuScreenState extends State<MenuScreen> {
 
   void _editDish(MenuItem item) {
     showMenuEditDishDialog(context, Get.find<MenuController>(), item);
+  }
+
+  // Opens the shared category manager so the catalog categories can be added,
+  // renamed or removed from the menu screen.
+  Future<void> _openCategoryManager() {
+    final MenuController controller = Get.find<MenuController>();
+
+    return showCategoryManagerDialog(
+      context: context,
+      title: 'Menu Categories',
+      subtitle: 'Add, rename or remove the categories of the catalog.',
+      categories: controller.categories,
+      usageCount: controller.countForCategory,
+      onCreate: controller.addCategory,
+      onRename: controller.renameCategory,
+      onDelete: controller.removeCategory,
+    );
   }
 }

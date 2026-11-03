@@ -31,7 +31,12 @@ extension MenuSortModeLabel on MenuSortMode {
 enum MenuViewMode { table, grid }
 
 class MenuController extends GetxController {
-  final List<String> categories = DummyMenuItemData.categories;
+  // Categories of the filter chips and the Add Dish dialog. It is a mutable
+  // copy of the dummy seed so the Category manager can edit it; the first
+  // entry is the fixed "All" filter.
+  final RxList<String> categories = <String>[
+    ...DummyMenuItemData.categories,
+  ].obs;
 
   final List<MenuModifierGroup> modifierGroups = DummyMenuModifierData.groups;
 
@@ -88,6 +93,69 @@ class MenuController extends GetxController {
   void categoryOnChanged(int index) {
     selectedCategory.value = index;
     currentPage.value = 1;
+  }
+
+  // selectable categories, without the fixed "All" filter
+  List<String> get selectableCategories => categories
+      .where((String category) => category != 'All')
+      .toList();
+
+  // Category management -----------------------------------------------------
+  // TODO: swap these three for the /menu/categories endpoints once the backend
+  // is live; the duplicate and last-category checks stay server-side.
+
+  /// Adds [name] to the catalog filter. Returns false when it is blank or
+  /// already exists.
+  bool addCategory(String name) {
+    final String value = name.trim();
+    if (value.isEmpty || categories.contains(value)) return false;
+
+    categories.add(value);
+    return true;
+  }
+
+  /// Renames [oldName] and moves every dish filed under it. Returns false when
+  /// the new name is blank, unchanged or already taken.
+  bool renameCategory(String oldName, String newName) {
+    final int index = categories.indexOf(oldName);
+    final String value = newName.trim();
+
+    if (index <= 0) return false;
+    if (value.isEmpty || value == oldName) return false;
+    if (categories.contains(value)) return false;
+
+    categories[index] = value;
+    _reassignCategory(oldName, value);
+    return true;
+  }
+
+  /// Removes [name], moving its dishes to the first remaining category so no
+  /// row is orphaned. The fixed "All" filter cannot be removed.
+  bool removeCategory(String name) {
+    final int index = categories.indexOf(name);
+    if (index <= 0) return false;
+
+    final String previous =
+        categories[selectedCategory.value.clamp(0, categories.length - 1)];
+    categories.removeAt(index);
+
+    // keep at least one real bucket so dishes always have a home
+    if (categories.length == 1) categories.add('General');
+    _reassignCategory(name, categories[1]);
+
+    // keep the filter on the same label where it still exists
+    final int restored = categories.indexOf(previous);
+    selectedCategory.value = restored >= 0 ? restored : 0;
+    currentPage.value = 1;
+    return true;
+  }
+
+  void _reassignCategory(String from, String to) {
+    for (int i = 0; i < menuItems.length; i++) {
+      if (menuItems[i].category == from) {
+        menuItems[i] = menuItems[i].copyWith(category: to);
+      }
+    }
   }
 
   void searchOnChanged(String value) {

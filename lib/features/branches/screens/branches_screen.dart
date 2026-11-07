@@ -3,10 +3,12 @@ import 'package:get/get.dart';
 import 'package:omnix/core/theme/app_theme.dart';
 import 'package:omnix/features/branches/controller/branch_controller.dart';
 import 'package:omnix/features/branches/model/branch_model.dart';
-import 'package:omnix/features/common/widgets/custom_container_widget.dart';
-import 'package:omnix/features/common/widgets/data_table_widget.dart';
-import 'package:omnix/features/common/widgets/section_header_widget.dart';
-import 'package:omnix/features/common/widgets/status_pill_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_add_dialog_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_card_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_compact_list_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_header_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_network_chart_widget.dart';
+import 'package:omnix/features/branches/widgets/branch_overview_banner_widget.dart';
 import 'package:omnix/features/common/widgets/top_bar_widget.dart';
 
 class BranchesScreen extends StatelessWidget {
@@ -18,84 +20,149 @@ class BranchesScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.topbarBackgroundBlack,
-      body: Column(
-        children: [
-          // Appbar Header
-          TopBarWidget(branchController: branchController),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: .stretch,
+          children: [
+            // Global app bar
+            TopBarWidget(branchController: branchController),
 
-          // Title, search and add button
-          Obx(
-            () => SectionHeaderWidget(
-              title: 'Branches',
-              subtitle:
-                  '${branchController.branchRecords.length} branches · ${branchController.activeCount} active',
-              searchHint: 'Search by name, id or manager',
-              onSearchChanged: branchController.searchOnChanged,
-              actionLabel: 'Add Branch',
-              actionIcon: Icons.add_business_outlined,
-              onAction: () {},
+            // Breadcrumb, title, search, view toggle and add action
+            BranchHeaderWidget(
+              controller: branchController,
+              onAddBranch: () => _openBranchDialog(context, branchController),
             ),
-          ),
 
-          // Branch table
-          Expanded(
-            child: Padding(
+            const SizedBox(height: 12),
+
+            // Consolidated network overview
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CustomContainerWidget(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Obx(() {
-                    final List<Branch> branches =
-                        branchController.filteredBranches;
-
-                    return DataTableWidget(
-                      columns: const [
-                        DataTableColumn(label: 'Branch', flex: 200),
-                        DataTableColumn(label: 'Address', flex: 232),
-                        DataTableColumn(label: 'Manager', flex: 150),
-                        DataTableColumn(
-                          label: 'Phone',
-                          flex: 129,
-                          monospace: true,
-                        ),
-                        DataTableColumn(label: 'Since', flex: 100),
-                        DataTableColumn(label: 'Status', flex: 111),
-                      ],
-                      rows: branches
-                          .map(
-                            (Branch branch) =>
-                                DataTableRow(cells: buildCells(branch)),
-                          )
-                          .toList(),
-                      emptyMessage: 'No branches match the search',
-                    );
-                  }),
-                ),
-              ),
+              child: BranchOverviewBannerWidget(controller: branchController),
             ),
-          ),
 
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 16),
+
+            // Branch cards or compact table
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Obx(() {
+                final List<Branch> branches = branchController.filteredBranches;
+
+                if (branchController.viewMode.value == BranchViewMode.compact) {
+                  return BranchCompactListWidget(
+                    branches: branches,
+                    onSwitch: branchController.switchToBranch,
+                    onEdit: (Branch branch) =>
+                        _openBranchDialog(context, branchController, branch),
+                    onToggleActive: branchController.toggleBranchActive,
+                  );
+                }
+
+                return _buildBranchGrid(context, branchController, branches);
+              }),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Cross-branch throughput chart
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: BranchNetworkChartWidget(controller: branchController),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  List<Widget> buildCells(Branch branch) {
-    return [
-      DataTableWidget.text(
-        branch.name,
-        color: AppTheme.badgeAmberText,
-        weight: FontWeight.w600,
+  Widget _buildBranchGrid(
+    BuildContext context,
+    BranchController controller,
+    List<Branch> branches,
+  ) {
+    if (branches.isEmpty) {
+      return const _EmptyBranchState();
+    }
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        const double gap = 12;
+        final int columns = constraints.maxWidth >= 1180
+            ? 3
+            : (constraints.maxWidth >= 760 ? 2 : 1);
+        final double width =
+            (constraints.maxWidth - (gap * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: branches
+              .map(
+                (Branch branch) => SizedBox(
+                  width: width,
+                  child: BranchCardWidget(
+                    branch: branch,
+                    onSwitch: () => controller.switchToBranch(branch),
+                    onEdit: () =>
+                        _openBranchDialog(context, controller, branch),
+                    onToggleActive: () => controller.toggleBranchActive(branch),
+                    onStaff: () => controller.showComingSoon(
+                      'Staff assignment for ${branch.name}',
+                    ),
+                    onConfig: () => controller.showComingSoon(
+                      'Terminal configuration for ${branch.name}',
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Future<void> _openBranchDialog(
+    BuildContext context,
+    BranchController controller, [
+    Branch? branch,
+  ]) {
+    return showBranchDialog(context, controller, branch: branch);
+  }
+}
+
+class _EmptyBranchState extends StatelessWidget {
+  const _EmptyBranchState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 190,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppTheme.windowWidgetBackgroundBlack,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.lightAmberWhite.withValues(alpha: 0.14),
+          width: 0.6,
+        ),
       ),
-      DataTableWidget.text(branch.address, weight: FontWeight.w400),
-      DataTableWidget.text(branch.manager, weight: FontWeight.w500),
-      DataTableWidget.text(branch.phone, color: AppTheme.tableHeaderText),
-      DataTableWidget.text(branch.openedAt, color: AppTheme.tableHeaderText),
-      StatusPillWidget(
-        label: branch.isActive ? 'Active' : 'Inactive',
-        tone: branch.isActive ? PillTone.green : PillTone.neutral,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        spacing: 8,
+        children: [
+          Icon(
+            Icons.storefront_outlined,
+            size: 28,
+            color: AppTheme.tableHeaderText.withValues(alpha: 0.7),
+          ),
+          const Text(
+            'No branches match the search',
+            style: TextStyle(fontSize: 12, color: AppTheme.tableHeaderText),
+          ),
+        ],
       ),
-    ];
+    );
   }
 }
